@@ -236,6 +236,79 @@
     }
   };
 
+  // ---------- Artists with filter tags ----------
+  const renderArtistsByFilter = (gridEl, filterKey, list) => {
+    const cards = [];
+    if (filterKey === 'all') {
+      for (const a of list) {
+        cards.push(renderArtistCard(a));
+        if ((a.category === 'group' || a.category === 'unit') && Array.isArray(a.memberItems)) {
+          for (const m of a.memberItems) cards.push(renderMemberCard(m, a.id));
+        }
+      }
+    } else if (filterKey === 'member') {
+      for (const a of list) {
+        if (Array.isArray(a.memberItems)) {
+          for (const m of a.memberItems) cards.push(renderMemberCard(m, a.id));
+        }
+      }
+    } else {
+      for (const a of list.filter((x) => x.category === filterKey)) {
+        cards.push(renderArtistCard(a));
+      }
+    }
+
+    if (cards.length === 0) {
+      gridEl.innerHTML = '<p style="padding:64px 24px; text-align:center; color:var(--text-tertiary); grid-column:1/-1;">該当するアーティストがいません。</p>';
+    } else {
+      gridEl.innerHTML = cards.join('');
+    }
+  };
+
+  const setupArtistFilters = async (filterEl, gridEl, opts = {}) => {
+    try {
+      const list = await fetchJSON(opts.dataPath || 'data/artists.json');
+
+      // 利用可能なカテゴリーを集計
+      const categories = new Set();
+      list.forEach((a) => categories.add(a.category));
+
+      const hasMembers = list.some((a) =>
+        (a.category === 'group' || a.category === 'unit') &&
+        Array.isArray(a.memberItems) && a.memberItems.length > 0
+      );
+
+      // 表示順：All → Group → Member → Solo → Unit （該当があるもののみ）
+      const filters = [{ key: 'all', label: 'All' }];
+      if (categories.has('group')) filters.push({ key: 'group', label: 'Group' });
+      if (hasMembers) filters.push({ key: 'member', label: 'Member' });
+      if (categories.has('solo')) filters.push({ key: 'solo', label: 'Solo' });
+      if (categories.has('unit')) filters.push({ key: 'unit', label: 'Unit' });
+
+      filterEl.innerHTML = filters.map((f, i) => `
+        <button class="btn ${i === 0 ? '' : 'btn--ghost'} btn--sm" data-filter="${f.key}">${escapeHtml(f.label)}</button>
+      `).join('');
+
+      filterEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-filter]');
+        if (!btn) return;
+        // ボタンの状態切り替え（active=塗り、その他=ghost）
+        filterEl.querySelectorAll('button[data-filter]').forEach((b) => {
+          if (b === btn) b.classList.remove('btn--ghost');
+          else b.classList.add('btn--ghost');
+        });
+        renderArtistsByFilter(gridEl, btn.dataset.filter, list);
+      });
+
+      // 初期表示
+      renderArtistsByFilter(gridEl, 'all', list);
+    } catch (err) {
+      console.error(err);
+      filterEl.innerHTML = '';
+      gridEl.innerHTML = '<p style="padding:24px; color:var(--text-tertiary);">アーティスト情報の読み込みに失敗しました。</p>';
+    }
+  };
+
   // ---------- Featured (top page mix of artists + members) ----------
   const renderFeatured = async (container, opts = {}) => {
     if (!container) return;
@@ -564,6 +637,13 @@
       renderFeatured(el);
     });
 
+    // Artist filter + grid のペアを検出
+    const filterEl = document.querySelector('[data-artist-filters]');
+    const gridEl = document.querySelector('[data-artist-grid]');
+    if (filterEl && gridEl) {
+      setupArtistFilters(filterEl, gridEl);
+    }
+
     if (document.querySelector('[data-render="audition"]')) {
       renderAudition();
     }
@@ -582,7 +662,7 @@
   };
 
   // 公開メソッド
-  window.PechuniaRender = { renderNews, renderArtists, renderFeatured, renderAudition, renderArtistDetail, renderMemberDetail, renderNewsDetail };
+  window.PechuniaRender = { renderNews, renderArtists, renderFeatured, renderAudition, renderArtistDetail, renderMemberDetail, renderNewsDetail, setupArtistFilters };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

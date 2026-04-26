@@ -46,14 +46,9 @@
 <!-- Filter -->
 <section class="section section--tight">
   <div class="container">
-    <div style="display:flex; gap:12px; flex-wrap:wrap; padding-bottom:24px; border-bottom:1px solid var(--line);" class="reveal">
-      <button class="btn btn--sm">All</button>
-      <button class="btn btn--ghost btn--sm">Group</button>
-      <button class="btn btn--ghost btn--sm">Solo</button>
-      <button class="btn btn--ghost btn--sm">Unit</button>
-    </div>
+    <div class="artist-filters reveal" data-artist-filters style="display:flex; gap:12px; flex-wrap:wrap; padding-bottom:24px; border-bottom:1px solid var(--line);"></div>
 
-    <div class="artists-grid reveal" data-render="artists" data-include-members="true" style="margin-top:48px;"></div>
+    <div class="artists-grid reveal" data-artist-grid style="margin-top:48px;"></div>
   </div>
 </section>
 
