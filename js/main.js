@@ -23,21 +23,32 @@
   const menuToggle = document.getElementById('menuToggle');
   const nav = document.getElementById('nav');
   if (menuToggle && nav) {
+    const closeMenu = () => {
+      nav.classList.remove('is-open');
+      menuToggle.classList.remove('is-open');
+      document.body.classList.remove('is-menu-open');
+    };
+    const openMenu = () => {
+      nav.classList.add('is-open');
+      menuToggle.classList.add('is-open');
+      document.body.classList.add('is-menu-open');
+    };
+
     menuToggle.addEventListener('click', () => {
-      const open = nav.classList.toggle('is-open');
-      menuToggle.classList.toggle('is-open', open);
-      document.body.style.overflow = open ? 'hidden' : '';
+      if (nav.classList.contains('is-open')) closeMenu();
+      else openMenu();
     });
 
-    // Close menu on nav click (mobile)
+    // ナビ項目タップで自動クローズ
     nav.querySelectorAll('a').forEach((a) => {
       a.addEventListener('click', () => {
-        if (nav.classList.contains('is-open')) {
-          nav.classList.remove('is-open');
-          menuToggle.classList.remove('is-open');
-          document.body.style.overflow = '';
-        }
+        if (nav.classList.contains('is-open')) closeMenu();
       });
+    });
+
+    // リサイズでデスクトップに戻ったら強制クローズ
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 720 && nav.classList.contains('is-open')) closeMenu();
     });
   }
 

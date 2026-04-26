@@ -1285,64 +1285,81 @@ main, header, footer {
 }
 
 @media (max-width: 720px) {
-  /* ハンバーガーメニュー */
+  /* ハンバーガーメニュー本体 */
   .nav {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 0;
     position: fixed;
     top: var(--header-h);
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    padding: 40px 24px 80px;
+    width: 100%;
+    height: calc(100vh - var(--header-h));
+    background: #ffffff;
+    padding: 32px 28px 80px;
     transform: translateY(-110%);
     transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     overflow-y: auto;
-    z-index: 90;
+    z-index: 95;
+    box-shadow: 0 12px 24px -10px rgba(86, 110, 128, 0.15);
   }
-  .nav.is-open { transform: translateY(0); }
+  .nav.is-open {
+    transform: translateY(0);
+  }
 
+  /* メニュー項目 */
   .nav a {
-    font-size: 18px;
-    letter-spacing: 0.2em;
-    padding: 14px 0;
-    color: var(--text-primary);
+    display: block;
     width: 100%;
+    padding: 18px 8px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 17px;
+    letter-spacing: 0.22em;
     text-align: center;
+    text-transform: uppercase;
+    color: var(--text-primary);
     border-bottom: 1px solid var(--line);
+    transition: color 0.2s ease;
   }
-  .nav a:last-of-type { border-bottom: none; }
-  .nav a::after { display: none; }
+  .nav a::after { display: none !important; }
   .nav a.is-active { color: var(--accent-strong); }
+  .nav a:hover { color: var(--accent-strong); }
 
-  /* CONTACT ボタンをメニュー内では目立つ形で表示 */
-  .nav .btn {
-    display: inline-flex;
-    margin-top: 24px;
-    padding: 14px 36px;
+  /* CONTACT ボタンを目立たせる */
+  .nav a.btn {
+    display: inline-flex !important;
+    align-self: center;
+    width: auto;
+    margin: 32px auto 0;
+    padding: 14px 40px;
     background: var(--accent);
-    color: #fff;
+    color: #ffffff;
     border: 1px solid var(--accent);
     border-radius: 999px;
-    width: auto;
-    border-bottom: 1px solid var(--accent);
-    font-size: 12px;
-    letter-spacing: 0.26em;
+    font-size: 13px;
+    letter-spacing: 0.28em;
   }
-  .nav .btn:hover {
+  .nav a.btn:hover {
     background: var(--accent-strong);
     border-color: var(--accent-strong);
+    color: #ffffff;
   }
 
+  /* ハンバーガートグル（最前面） */
   .menu-toggle {
     display: flex;
     position: relative;
-    z-index: 110;
+    z-index: 120;
+  }
+
+  /* メニュー開いた時に背景スクロール禁止 */
+  body.is-menu-open {
+    overflow: hidden;
   }
 
   .hero-meta { display: none; }
