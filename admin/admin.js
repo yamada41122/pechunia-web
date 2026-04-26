@@ -700,7 +700,13 @@
   const openMemberModal = (idx, memberItems, parentArtistKey, onUpdated) => {
     const isNew = idx < 0;
     const m = isNew
-      ? { id: '', name: '', nameJa: '', role: '', image: null, initial: '' }
+      ? {
+          id: '', name: '', nameJa: '', furigana: '', role: '',
+          birthday: '', birthplace: '', bloodType: '', height: '',
+          hobbies: '', specialties: '', catchphrase: '', description: '',
+          image: null, initial: '',
+          instagram: '', twitter: '', youtube: '', tiktok: '',
+        }
       : { ...memberItems[idx] };
 
     let imageState = {
@@ -712,22 +718,35 @@
 
     memberModalTitle.textContent = isNew ? 'メンバーを追加' : 'メンバーを編集';
     memberModalBody.innerHTML = `
-      <div class="field">
-        <label>名前 / Name</label>
-        <input type="text" id="mm_name" value="${escapeHtml(m.name)}" placeholder="AOI">
+      <h4 style="font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--accent-strong); margin-top:-4px;">基本情報</h4>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="field">
+          <label>名前 / Name</label>
+          <input type="text" id="mm_name" value="${escapeHtml(m.name)}" placeholder="AOI">
+        </div>
+        <div class="field">
+          <label>日本語表記（任意）</label>
+          <input type="text" id="mm_nameJa" value="${escapeHtml(m.nameJa || '')}" placeholder="蒼">
+        </div>
       </div>
-      <div class="field">
-        <label>日本語表記（任意）</label>
-        <input type="text" id="mm_nameJa" value="${escapeHtml(m.nameJa || '')}" placeholder="蒼">
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="field">
+          <label>ふりがな（任意）</label>
+          <input type="text" id="mm_furigana" value="${escapeHtml(m.furigana || '')}" placeholder="あおい">
+        </div>
+        <div class="field">
+          <label>役柄 / Position</label>
+          <input type="text" id="mm_role" value="${escapeHtml(m.role || '')}" placeholder="リーダー / メインボーカル">
+        </div>
       </div>
+
       <div class="field">
-        <label>役柄ラベル / Role</label>
-        <input type="text" id="mm_role" value="${escapeHtml(m.role || '')}" placeholder="Leader / Main Vocal">
+        <label>イニシャル（画像なし時のカード表示）</label>
+        <input type="text" id="mm_initial" value="${escapeHtml(m.initial || '')}" placeholder="A" maxlength="2" style="max-width:120px;">
       </div>
-      <div class="field">
-        <label>イニシャル（画像なし時の表示）</label>
-        <input type="text" id="mm_initial" value="${escapeHtml(m.initial || '')}" placeholder="A" maxlength="2">
-      </div>
+
       <div class="field">
         <label>画像（最大 5MB）</label>
         <div class="image-upload">
@@ -743,6 +762,72 @@
             <button type="button" class="image-remove-btn" id="mm_imgRemove" style="${imageState.previewUrl ? '' : 'display:none;'}">画像を削除</button>
           </div>
         </div>
+      </div>
+
+      <h4 style="font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--accent-strong); margin-top:8px;">プロフィール</h4>
+
+      <div class="field">
+        <label>キャッチコピー（任意）</label>
+        <input type="text" id="mm_catchphrase" value="${escapeHtml(m.catchphrase || '')}" placeholder="例：いつも笑顔をお届けします！">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="field">
+          <label>誕生日</label>
+          <input type="text" id="mm_birthday" value="${escapeHtml(m.birthday || '')}" placeholder="2月14日">
+        </div>
+        <div class="field">
+          <label>出身地</label>
+          <input type="text" id="mm_birthplace" value="${escapeHtml(m.birthplace || '')}" placeholder="東京都">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="field">
+          <label>血液型</label>
+          <input type="text" id="mm_bloodType" value="${escapeHtml(m.bloodType || '')}" placeholder="O" style="max-width:120px;">
+        </div>
+        <div class="field">
+          <label>身長</label>
+          <input type="text" id="mm_height" value="${escapeHtml(m.height || '')}" placeholder="160cm" style="max-width:160px;">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>趣味</label>
+        <input type="text" id="mm_hobbies" value="${escapeHtml(m.hobbies || '')}" placeholder="映画鑑賞 / カメラ / 紅茶">
+      </div>
+
+      <div class="field">
+        <label>特技</label>
+        <input type="text" id="mm_specialties" value="${escapeHtml(m.specialties || '')}" placeholder="ダンス / バレエ / 英語">
+      </div>
+
+      <div class="field">
+        <label>自己紹介・説明（任意）</label>
+        <textarea id="mm_description" rows="4" placeholder="メンバーの自己紹介文">${escapeHtml(m.description || '')}</textarea>
+      </div>
+
+      <h4 style="font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--accent-strong); margin-top:8px;">SNS（任意）</h4>
+
+      <div class="field">
+        <label>Instagram URL</label>
+        <input type="url" id="mm_instagram" value="${escapeHtml(m.instagram || '')}" placeholder="https://www.instagram.com/...">
+      </div>
+
+      <div class="field">
+        <label>X / Twitter URL</label>
+        <input type="url" id="mm_twitter" value="${escapeHtml(m.twitter || '')}" placeholder="https://twitter.com/...">
+      </div>
+
+      <div class="field">
+        <label>YouTube URL</label>
+        <input type="url" id="mm_youtube" value="${escapeHtml(m.youtube || '')}" placeholder="https://www.youtube.com/...">
+      </div>
+
+      <div class="field">
+        <label>TikTok URL</label>
+        <input type="url" id="mm_tiktok" value="${escapeHtml(m.tiktok || '')}" placeholder="https://www.tiktok.com/...">
       </div>
     `;
 
@@ -804,9 +889,22 @@
         id: memberId,
         name,
         nameJa: $('#mm_nameJa').value.trim(),
+        furigana: $('#mm_furigana').value.trim(),
         role: $('#mm_role').value.trim(),
+        birthday: $('#mm_birthday').value.trim(),
+        birthplace: $('#mm_birthplace').value.trim(),
+        bloodType: $('#mm_bloodType').value.trim(),
+        height: $('#mm_height').value.trim(),
+        hobbies: $('#mm_hobbies').value.trim(),
+        specialties: $('#mm_specialties').value.trim(),
+        catchphrase: $('#mm_catchphrase').value.trim(),
+        description: $('#mm_description').value.trim(),
         initial: $('#mm_initial').value.trim() || name.charAt(0).toUpperCase(),
         image: imageState.removed ? null : (imageState.pendingFile ? null : m.image),
+        instagram: $('#mm_instagram').value.trim(),
+        twitter: $('#mm_twitter').value.trim(),
+        youtube: $('#mm_youtube').value.trim(),
+        tiktok: $('#mm_tiktok').value.trim(),
       };
       if (isNew) memberItems.push(updated);
       else memberItems[idx] = updated;

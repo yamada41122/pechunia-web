@@ -69,12 +69,13 @@
     `;
   };
 
-  // メンバーカード（artist-detail用、内側のIDをmemberId付きで渡す）
+  // メンバーカード（artist-detail / member-detail 用）
   const renderMemberCard = (member, parentId) => {
     const hasImg = !!member.image;
     const visualStyle = hasImg ? `style="background-image:url('${escapeHtml(member.image)}')"` : '';
+    const href = `member-detail.html?artist=${escapeHtml(parentId)}&member=${escapeHtml(member.id)}`;
     return `
-      <a href="#" class="artist-card ${hasImg ? 'has-image' : ''}">
+      <a href="${href}" class="artist-card ${hasImg ? 'has-image' : ''}">
         <div class="visual" ${visualStyle}>${hasImg ? '' : escapeHtml(member.initial || (member.name || '').charAt(0))}</div>
         <div class="meta">
           <div class="role">${escapeHtml(member.role || '')}</div>
@@ -180,6 +181,124 @@
     }
   };
 
+  // ---------- Member detail ----------
+  const SOCIAL_LABELS = {
+    instagram: 'Instagram',
+    twitter: 'X / Twitter',
+    youtube: 'YouTube',
+    tiktok: 'TikTok',
+  };
+
+  const renderMemberDetail = async (opts = {}) => {
+    try {
+      const list = await fetchJSON(opts.dataPath || 'data/artists.json');
+      const params = new URLSearchParams(window.location.search);
+      const artistId = params.get('artist');
+      const memberId = params.get('member');
+
+      const artist = artistId && list.find((a) => a.id === artistId);
+      if (!artist) {
+        const titleEl = document.querySelector('[data-member="title"]');
+        if (titleEl) titleEl.textContent = 'Not Found';
+        return;
+      }
+
+      const members = artist.memberItems || [];
+      const member = (memberId && members.find((m) => m.id === memberId)) || members[0];
+      if (!member) return;
+
+      // タイトル
+      document.title = `${member.name} / ${artist.name} | PECHUNIA`;
+
+      const crumbEl = document.querySelector('[data-member="crumb"]');
+      if (crumbEl) crumbEl.textContent = `Home / Artists / ${artist.name} / ${member.name}`;
+
+      const titleEl = document.querySelector('[data-member="title"]');
+      if (titleEl) titleEl.textContent = member.name;
+
+      const subtitleEl = document.querySelector('[data-member="subtitle"]');
+      if (subtitleEl) subtitleEl.textContent = `${artist.name}${member.role ? ' / ' + member.role : ''}`;
+
+      // ポートレート
+      const portraitEl = document.querySelector('[data-member="portrait"]');
+      if (portraitEl) {
+        if (member.image) {
+          portraitEl.classList.add('has-image');
+          portraitEl.style.backgroundImage = `url('${member.image}')`;
+          portraitEl.innerHTML = '';
+        } else {
+          portraitEl.classList.remove('has-image');
+          portraitEl.style.backgroundImage = '';
+          portraitEl.innerHTML = `<div class="initial">${escapeHtml(member.initial || (member.name || '').charAt(0))}</div>`;
+        }
+      }
+
+      const nameEl = document.querySelector('[data-member="name"]');
+      if (nameEl) nameEl.textContent = member.name;
+
+      const nameJaEl = document.querySelector('[data-member="nameJa"]');
+      if (nameJaEl) nameJaEl.textContent = member.nameJa || '';
+
+      const furiganaEl = document.querySelector('[data-member="furigana"]');
+      if (furiganaEl) furiganaEl.textContent = member.furigana ? `(${member.furigana})` : '';
+
+      const catchEl = document.querySelector('[data-member="catchphrase"]');
+      if (catchEl) catchEl.textContent = member.catchphrase || '';
+
+      const descEl = document.querySelector('[data-member="description"]');
+      if (descEl) descEl.textContent = member.description || '';
+
+      // プロフィール表（値があるものだけ表示）
+      const profileEl = document.querySelector('[data-member="profile"]');
+      if (profileEl) {
+        const rows = [
+          { label: 'Name', value: member.name },
+          { label: 'Group', value: artist.name },
+          { label: 'Position', value: member.role },
+          { label: 'Birthday', value: member.birthday },
+          { label: 'Birthplace', value: member.birthplace },
+          { label: 'Blood', value: member.bloodType },
+          { label: 'Height', value: member.height },
+          { label: 'Hobbies', value: member.hobbies },
+          { label: 'Specialties', value: member.specialties },
+        ].filter((r) => r.value);
+        profileEl.innerHTML = rows
+          .map((r) => `<div class="profile-row"><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd></div>`)
+          .join('');
+      }
+
+      // SNS
+      const socialEl = document.querySelector('[data-member="social-wrap"]');
+      if (socialEl) {
+        const links = ['instagram', 'twitter', 'youtube', 'tiktok']
+          .filter((k) => member[k])
+          .map((k) => `<a href="${escapeHtml(member[k])}" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">${SOCIAL_LABELS[k]}</a>`)
+          .join('');
+        socialEl.innerHTML = links;
+      }
+
+      // 他メンバー
+      const othersWrap = document.querySelector('[data-member="others-section"]');
+      const othersGrid = document.querySelector('[data-member="others-grid"]');
+      const othersEyebrow = document.querySelector('[data-member="others-eyebrow"]');
+      const backLink = document.querySelector('[data-member="back-link"]');
+      if (backLink) backLink.setAttribute('href', `artist-detail.html?id=${artist.id}`);
+      if (othersEyebrow) othersEyebrow.textContent = `${artist.name} / Other Members`;
+
+      if (othersWrap && othersGrid) {
+        const others = members.filter((m) => m.id !== member.id);
+        if (others.length > 0) {
+          othersGrid.innerHTML = others.map((m) => renderMemberCard(m, artist.id)).join('');
+          othersWrap.style.display = '';
+        } else {
+          othersWrap.style.display = 'none';
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // ---------- Audition ----------
   const renderAudition = async (opts = {}) => {
     try {
@@ -269,10 +388,14 @@
     if (document.querySelector('[data-render="artist-detail"]')) {
       renderArtistDetail();
     }
+
+    if (document.querySelector('[data-render="member-detail"]')) {
+      renderMemberDetail();
+    }
   };
 
   // 公開メソッド
-  window.PechuniaRender = { renderNews, renderArtists, renderAudition, renderArtistDetail };
+  window.PechuniaRender = { renderNews, renderArtists, renderAudition, renderArtistDetail, renderMemberDetail };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
