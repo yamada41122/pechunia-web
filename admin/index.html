@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin | PECHUNIA</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="../img/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Montserrat:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ========== Login Screen ========== -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-header">
+      <img src="../img/logo-mark.svg" alt="PECHUNIA" class="login-logo">
+      <h1>PECHUNIA Admin</h1>
+      <p>サイトの編集にはGitHubの個人アクセストークンが必要です。</p>
+    </div>
+
+    <form id="loginForm" class="login-form">
+      <div class="field">
+        <label for="ownerInput">リポジトリのオーナー（GitHubユーザー名）</label>
+        <input id="ownerInput" type="text" placeholder="例：yamada41122" autocomplete="off" required>
+      </div>
+
+      <div class="field">
+        <label for="repoInput">リポジトリ名</label>
+        <input id="repoInput" type="text" value="pechunia-web" autocomplete="off" required>
+      </div>
+
+      <div class="field">
+        <label for="tokenInput">Personal Access Token (PAT)</label>
+        <input id="tokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" required>
+        <small class="field-help">
+          <a href="#" id="tokenHelpLink">トークンの取得方法 →</a>
+        </small>
+      </div>
+
+      <div class="login-error" id="loginError"></div>
+
+      <button type="submit" class="btn-primary" id="loginBtn">ログイン</button>
+    </form>
+
+    <div class="token-help" id="tokenHelp">
+      <h3>Personal Access Token の取得方法</h3>
+      <ol>
+        <li>GitHub にログインした状態で <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">こちら</a> を開く</li>
+        <li><strong>Generate new token</strong> をクリック</li>
+        <li>Token name に任意の名前（例：「pechunia-admin」）</li>
+        <li>Expiration（有効期限）を設定（90日〜1年がおすすめ）</li>
+        <li>Repository access：<strong>Only select repositories</strong> → 該当リポジトリを選択</li>
+        <li>Repository permissions の <strong>Contents</strong> を <strong>Read and write</strong> に</li>
+        <li>下部の <strong>Generate token</strong> をクリック</li>
+        <li>表示された <code>github_pat_xxxxx...</code> をコピー（一度しか表示されません）</li>
+      </ol>
+      <p><small>※ トークンはお使いのブラウザにのみ保存され、第三者に送信されることはありません。</small></p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Admin Dashboard ========== -->
+<div id="dashboard" class="dashboard hidden">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div class="admin-brand">
+        <img src="../img/logo-mark.svg" alt="" class="admin-logo">
+        <div>
+          <div class="admin-title">PECHUNIA Admin</div>
+          <div class="admin-user" id="adminUser"></div>
+        </div>
+      </div>
+      <div class="admin-actions">
+        <a href="../index.html" target="_blank" class="btn-ghost">サイトを確認 ↗</a>
+        <button class="btn-ghost" id="logoutBtn">ログアウト</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="admin-tabs">
+    <button class="tab-btn is-active" data-tab="news">News</button>
+    <button class="tab-btn" data-tab="artists">Artists</button>
+    <button class="tab-btn" data-tab="audition">Audition</button>
+  </nav>
+
+  <main class="admin-main">
+    <!-- 通知 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- News Panel -->
+    <section class="panel" data-panel="news">
+      <div class="panel-head">
+        <div>
+          <h2>News 管理</h2>
+          <p class="panel-desc">ニュースの追加・編集・並び替えができます。</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-ghost" data-action="add-news">+ 新規ニュースを追加</button>
+          <button class="btn-primary" data-action="save-news">変更を保存</button>
+        </div>
+      </div>
+      <div class="news-editor" id="newsEditor"></div>
+    </section>
+
+    <!-- Artists Panel -->
+    <section class="panel hidden" data-panel="artists">
+      <div class="panel-head">
+        <div>
+          <h2>Artists 管理</h2>
+          <p class="panel-desc">所属アーティストの追加・編集・並び替えができます。</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-ghost" data-action="add-artist">+ 新規アーティストを追加</button>
+          <button class="btn-primary" data-action="save-artists">変更を保存</button>
+        </div>
+      </div>
+      <div class="artists-editor" id="artistsEditor"></div>
+    </section>
+
+    <!-- Audition Panel -->
+    <section class="panel hidden" data-panel="audition">
+      <div class="panel-head">
+        <div>
+          <h2>Audition 管理</h2>
+          <p class="panel-desc">オーディションページの内容を編集できます。</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-primary" data-action="save-audition">変更を保存</button>
+        </div>
+      </div>
+      <div class="audition-editor" id="auditionEditor"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ========== Modal Overlay ========== -->
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <h3 id="modalTitle">編集</h3>
+      <button class="modal-close" id="modalClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="modalCancel">キャンセル</button>
+      <button class="btn-primary" id="modalSave">適用</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Loading Overlay ========== -->
+<div class="loading-overlay hidden" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">読み込み中...</div>
+</div>
+
+<script src="github.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

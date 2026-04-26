@@ -38,13 +38,13 @@
 </section>
 
 <!-- Catch -->
-<section class="section section--tight">
+<section class="section section--tight" data-render="audition">
   <div class="container">
     <div class="content-block reveal">
-      <p style="font-size:18px; color:var(--text-primary); line-height:2; font-family:var(--font-display); font-style:italic;">
+      <p style="font-size:18px; color:var(--text-primary); line-height:2; font-family:var(--font-display); font-style:italic;" data-audition="catchcopy">
         Bloom in your own color.
       </p>
-      <p style="margin-top:8px;">
+      <p style="margin-top:8px;" data-audition="lead">
         あなたの「らしさ」を、一緒に咲かせてみませんか。<br>
         PECHUNIA は、未来を彩る新たなアーティストを募集します。
       </p>
@@ -59,63 +59,27 @@
       <div class="reveal">
         <h2>Recruitment</h2>
         <h3>募集要項</h3>
-        <ul>
-          <li>13歳〜25歳の男女（性別不問・国籍不問）</li>
-          <li>歌・ダンス・演技などの表現に情熱を持つ方</li>
-          <li>事務所の方針に共感し、長期的に活動可能な方</li>
-          <li>未経験者・経験者ともに歓迎</li>
-        </ul>
+        <ul data-audition="requirements"></ul>
       </div>
 
       <div class="reveal" data-delay="1">
         <h3>応募方法</h3>
         <p>下記いずれかの方法でエントリーください：</p>
-        <ul>
-          <li>WEB エントリーフォームからの応募</li>
-          <li>所属アーティスト推薦による応募</li>
-          <li>SNS 経由での自薦動画投稿（指定ハッシュタグ）</li>
-        </ul>
+        <ul data-audition="apply-methods"></ul>
       </div>
 
-      <div class="steps">
-        <div class="step reveal" data-delay="1">
-          <div class="num">Step 01</div>
-          <h4>Entry</h4>
-          <p>専用フォームから必要事項を入力し、自己 PR 動画を提出。</p>
-        </div>
-        <div class="step reveal" data-delay="2">
-          <div class="num">Step 02</div>
-          <h4>Web Screening</h4>
-          <p>書類選考と動画審査。約 2 週間で結果をご連絡します。</p>
-        </div>
-        <div class="step reveal" data-delay="3">
-          <div class="num">Step 03</div>
-          <h4>Studio Audition</h4>
-          <p>東京・大阪・福岡のいずれかでパフォーマンス審査。</p>
-        </div>
-        <div class="step reveal" data-delay="4">
-          <div class="num">Step 04</div>
-          <h4>Final</h4>
-          <p>最終面接を経て合格者には研修プログラムをご案内。</p>
-        </div>
-      </div>
+      <div class="steps" data-audition="steps"></div>
 
       <div class="reveal" style="margin-top:64px;">
         <h2>Schedule</h2>
-        <dl class="company-table">
-          <div class="row"><dt>Entry</dt><dd>2026年3月22日（日）〜 6月30日（火）</dd></div>
-          <div class="row"><dt>Web Screening</dt><dd>2026年7月上旬 〜 7月下旬</dd></div>
-          <div class="row"><dt>Studio Audition</dt><dd>2026年8月（東京・大阪・福岡）</dd></div>
-          <div class="row"><dt>Final</dt><dd>2026年9月中旬</dd></div>
-          <div class="row"><dt>Result</dt><dd>2026年9月下旬 個別連絡</dd></div>
-        </dl>
+        <dl class="company-table" data-audition="schedule"></dl>
       </div>
 
       <div class="reveal" style="margin-top:64px; padding:48px 40px; border:1px solid var(--accent); border-radius:16px; background:linear-gradient(160deg, #f4f9fc 0%, #ffffff 100%); text-align:center; box-shadow:var(--shadow);">
         <div class="eyebrow" style="justify-content:center;">Ready to Bloom?</div>
         <h2 style="border:none; padding:0; margin:8px 0 16px; font-style:italic; color:var(--accent-strong);">エントリー受付中</h2>
-        <p style="color:var(--text-secondary); margin-bottom:28px;">2026年6月30日（火）23:59 締切</p>
-        <a href="contact.html" class="btn">Entry Now →</a>
+        <p style="color:var(--text-secondary); margin-bottom:28px;" data-audition="deadline">2026年6月30日（火）23:59 締切</p>
+        <a href="contact.html" class="btn" data-audition="cta">Entry Now →</a>
       </div>
     </div>
   </div>
@@ -165,6 +129,7 @@
   </div>
 </footer>
 
+<script src="js/data-render.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

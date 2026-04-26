@@ -91,38 +91,7 @@
       <h2 class="section-title">Latest <em>Updates</em></h2>
     </div>
 
-    <div class="news-list reveal">
-      <a href="news.html" class="news-item">
-        <span class="news-date">2026.04.18</span>
-        <span class="news-tag is-live">LIVE</span>
-        <span class="news-title">LUMINAS、初の単独アリーナ公演「PETAL NIGHT 2026」横浜アリーナ開催決定</span>
-        <span class="news-arrow">→</span>
-      </a>
-      <a href="news.html" class="news-item">
-        <span class="news-date">2026.04.05</span>
-        <span class="news-tag is-media">MEDIA</span>
-        <span class="news-title">NEXION、ファッションマガジン「VOGUE JAPAN」5月号にカバー登場</span>
-        <span class="news-arrow">→</span>
-      </a>
-      <a href="news.html" class="news-item">
-        <span class="news-date">2026.03.22</span>
-        <span class="news-tag is-info">INFO</span>
-        <span class="news-title">第7期生オーディション「PECHUNIA AUDITION 2026」エントリー受付開始</span>
-        <span class="news-arrow">→</span>
-      </a>
-      <a href="news.html" class="news-item">
-        <span class="news-date">2026.03.10</span>
-        <span class="news-tag is-live">LIVE</span>
-        <span class="news-title">KANATA、海外初公演をソウル KSPO DOMEで開催</span>
-        <span class="news-arrow">→</span>
-      </a>
-      <a href="news.html" class="news-item">
-        <span class="news-date">2026.02.28</span>
-        <span class="news-tag is-media">MEDIA</span>
-        <span class="news-title">所属アーティスト総勢 12名が出演する公式 YouTube チャンネルを開設</span>
-        <span class="news-arrow">→</span>
-      </a>
-    </div>
+    <div class="news-list reveal" data-render="news" data-limit="5"></div>
 
     <div style="margin-top:48px; text-align:right;" class="reveal">
       <a href="news.html" class="btn btn--ghost btn--sm">View All News →</a>
@@ -142,67 +111,7 @@
       </p>
     </div>
 
-    <div class="artists-grid">
-      <a href="artist-detail.html" class="artist-card c-1 reveal" data-delay="1">
-        <div class="visual">L</div>
-        <span class="corner">N° 01</span>
-        <div class="meta">
-          <div class="role">5 Members Girls Group</div>
-          <div class="name">LUMINAS</div>
-          <div class="members">AOI / MIKU / RIN / YUMA / SAKI</div>
-        </div>
-      </a>
-
-      <a href="artist-detail.html" class="artist-card c-2 reveal" data-delay="2">
-        <div class="visual">N</div>
-        <span class="corner">N° 02</span>
-        <div class="meta">
-          <div class="role">4 Members Boys Group</div>
-          <div class="name">NEXION</div>
-          <div class="members">HARU / KEI / REN / YUTO</div>
-        </div>
-      </a>
-
-      <a href="artist-detail.html" class="artist-card c-3 reveal" data-delay="3">
-        <div class="visual">K</div>
-        <span class="corner">N° 03</span>
-        <div class="meta">
-          <div class="role">Solo Artist</div>
-          <div class="name">KANATA</div>
-          <div class="members">Vocal / Dance / Produce</div>
-        </div>
-      </a>
-
-      <a href="artist-detail.html" class="artist-card c-4 reveal" data-delay="1">
-        <div class="visual">A</div>
-        <span class="corner">N° 04</span>
-        <div class="meta">
-          <div class="role">Solo Artist</div>
-          <div class="name">AMI</div>
-          <div class="members">Vocal / Songwriter</div>
-        </div>
-      </a>
-
-      <a href="artist-detail.html" class="artist-card c-5 reveal" data-delay="2">
-        <div class="visual">P</div>
-        <span class="corner">N° 05</span>
-        <div class="meta">
-          <div class="role">3 Members Unit</div>
-          <div class="name">PRISMA</div>
-          <div class="members">NANA / KOTONE / RUNA</div>
-        </div>
-      </a>
-
-      <a href="artist-detail.html" class="artist-card c-6 reveal" data-delay="3">
-        <div class="visual">V</div>
-        <span class="corner">N° 06</span>
-        <div class="meta">
-          <div class="role">Performer</div>
-          <div class="name">VAEL</div>
-          <div class="members">Dance / Choreography</div>
-        </div>
-      </a>
-    </div>
+    <div class="artists-grid reveal" data-render="artists" data-limit="6"></div>
 
     <div style="margin-top:64px; text-align:center;" class="reveal">
       <a href="artists.html" class="btn">View All Artists →</a>
@@ -316,6 +225,7 @@
   </div>
 </footer>
 
+<script src="js/data-render.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

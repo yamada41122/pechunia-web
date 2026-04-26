@@ -1,0 +1,110 @@
+[
+  {
+    "id": "luminas",
+    "no": "01",
+    "name": "LUMINAS",
+    "category": "girls",
+    "role": "Girls Group",
+    "members": "5 Members",
+    "memberList": "AOI / MIKU / RIN / YUMA / SAKI",
+    "colorVariant": "c-1",
+    "initial": "L",
+    "description": "PECHUNIA の代表的なガールズグループ。透明感のあるボーカルとシンクロしたダンスで人気。"
+  },
+  {
+    "id": "nexion",
+    "no": "02",
+    "name": "NEXION",
+    "category": "boys",
+    "role": "Boys Group",
+    "members": "4 Members",
+    "memberList": "HARU / KEI / REN / YUTO",
+    "colorVariant": "c-2",
+    "initial": "N",
+    "description": "クールでモードな世界観の4人組ボーイズグループ。"
+  },
+  {
+    "id": "kanata",
+    "no": "03",
+    "name": "KANATA",
+    "category": "solo",
+    "role": "Solo Artist",
+    "members": "Vocal / Dance / Produce",
+    "memberList": "Vocal / Dance / Produce",
+    "colorVariant": "c-3",
+    "initial": "K",
+    "description": "ソロアーティスト。ボーカルとダンスのほか、プロデュース活動も行う。"
+  },
+  {
+    "id": "ami",
+    "no": "04",
+    "name": "AMI",
+    "category": "solo",
+    "role": "Solo Artist",
+    "members": "Vocal / Songwriter",
+    "memberList": "Vocal / Songwriter",
+    "colorVariant": "c-4",
+    "initial": "A",
+    "description": "シンガーソングライター。やわらかな歌声と繊細な歌詞が特徴。"
+  },
+  {
+    "id": "prisma",
+    "no": "05",
+    "name": "PRISMA",
+    "category": "unit",
+    "role": "Unit",
+    "members": "3 Members",
+    "memberList": "NANA / KOTONE / RUNA",
+    "colorVariant": "c-5",
+    "initial": "P",
+    "description": "3人組ユニット。ハーモニーを軸にした楽曲が魅力。"
+  },
+  {
+    "id": "vael",
+    "no": "06",
+    "name": "VAEL",
+    "category": "performer",
+    "role": "Performer",
+    "members": "Dance / Choreography",
+    "memberList": "Dance / Choreography",
+    "colorVariant": "c-6",
+    "initial": "V",
+    "description": "ダンサー兼振付師。ライブ演出にも携わる。"
+  },
+  {
+    "id": "sora",
+    "no": "07",
+    "name": "SORA",
+    "category": "solo",
+    "role": "Solo Artist",
+    "members": "Vocal",
+    "memberList": "Vocal",
+    "colorVariant": "c-2",
+    "initial": "S",
+    "description": "若手ソロボーカリスト。"
+  },
+  {
+    "id": "echo",
+    "no": "08",
+    "name": "ECHO",
+    "category": "unit",
+    "role": "Unit",
+    "members": "2 Members",
+    "memberList": "2 Members",
+    "colorVariant": "c-3",
+    "initial": "E",
+    "description": "2人組ユニット。"
+  },
+  {
+    "id": "mira",
+    "no": "09",
+    "name": "MIRA",
+    "category": "performer",
+    "role": "Performer",
+    "members": "Dance / Rap",
+    "memberList": "Dance / Rap",
+    "colorVariant": "c-1",
+    "initial": "M",
+    "description": "ダンス&ラップの実力派パフォーマー。"
+  }
+]
