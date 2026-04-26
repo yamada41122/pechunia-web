@@ -48,33 +48,46 @@
       </p>
 
       <div id="formSuccess" class="form-success reveal">
-        ✓ お問い合わせを受け付けました。<br>担当者よりご連絡いたします。
+        ✓ お問い合わせを送信しました。<br>担当者よりご連絡いたします。
       </div>
 
-      <form class="form reveal" id="contactForm" novalidate>
+      <div id="formError" class="form-success reveal" style="display:none; border-color:rgba(200,125,142,0.4); background:rgba(200,125,142,0.06); color:#c87d8e;">
+        ✕ 送信に失敗しました。<br>お手数ですが時間をおいて再度お試しいただくか、直接 info@pechunia.com までご連絡ください。
+      </div>
+
+      <!-- Formspree 連携：action の myklvbpq を発行されたフォームIDに置き換えてください -->
+      <form class="form reveal" id="contactForm" novalidate
+            action="https://formspree.io/f/myklvbpq"
+            method="POST">
+        <!-- Formspree 設定用の隠しフィールド -->
+        <input type="hidden" name="_subject" value="【PECHUNIA お問い合わせ】新規問い合わせが届きました">
+        <input type="hidden" name="_language" value="ja">
+        <!-- スパム対策（人間には見えない） -->
+        <input type="text" name="_gotcha" style="display:none !important;" tabindex="-1" autocomplete="off">
+
         <div class="field">
           <label for="type">お問い合わせ種別 <span class="req">*</span></label>
-          <select id="type" name="type" required>
+          <select id="type" name="お問い合わせ種別" required>
             <option value="">選択してください</option>
-            <option value="general">一般のお問い合わせ</option>
-            <option value="press">取材のご依頼</option>
-            <option value="cast">出演・キャスティング依頼</option>
-            <option value="audition">オーディションについて</option>
-            <option value="business">業務提携・タイアップ</option>
-            <option value="other">その他</option>
+            <option value="一般のお問い合わせ">一般のお問い合わせ</option>
+            <option value="取材のご依頼">取材のご依頼</option>
+            <option value="出演・キャスティング依頼">出演・キャスティング依頼</option>
+            <option value="オーディションについて">オーディションについて</option>
+            <option value="業務提携・タイアップ">業務提携・タイアップ</option>
+            <option value="その他">その他</option>
           </select>
           <span class="error-msg">お問い合わせ種別を選択してください</span>
         </div>
 
         <div class="field">
           <label for="name">お名前 / Name <span class="req">*</span></label>
-          <input type="text" id="name" name="name" placeholder="山田 太郎" required>
+          <input type="text" id="name" name="お名前" placeholder="山田 太郎" required>
           <span class="error-msg">お名前を入力してください</span>
         </div>
 
         <div class="field">
           <label for="company">会社名・所属 / Company</label>
-          <input type="text" id="company" name="company" placeholder="株式会社〇〇">
+          <input type="text" id="company" name="会社名" placeholder="株式会社〇〇">
         </div>
 
         <div class="field">
@@ -85,7 +98,7 @@
 
         <div class="field">
           <label for="message">お問い合わせ内容 <span class="req">*</span></label>
-          <textarea id="message" name="message" placeholder="お問い合わせ内容をご記入ください。" required></textarea>
+          <textarea id="message" name="お問い合わせ内容" placeholder="お問い合わせ内容をご記入ください。" required></textarea>
           <span class="error-msg">お問い合わせ内容を入力してください</span>
         </div>
 
@@ -98,7 +111,7 @@
         </div>
 
         <div class="form-actions">
-          <button type="submit" class="btn">Submit →</button>
+          <button type="submit" class="btn" id="submitBtn">Submit →</button>
         </div>
       </form>
 

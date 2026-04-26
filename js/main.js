@@ -71,15 +71,18 @@
     reveals.forEach((el) => el.classList.add('is-visible'));
   }
 
-  // ---------- Contact form validation ----------
+  // ---------- Contact form validation + Formspree submit ----------
   const form = document.getElementById('contactForm');
   if (form) {
     const successMsg = document.getElementById('formSuccess');
+    const errorMsg = document.getElementById('formError');
+    const submitBtn = document.getElementById('submitBtn');
     const fields = form.querySelectorAll('input, select, textarea');
 
     const validateField = (field) => {
       const wrap = field.closest('.field');
       if (!wrap) return true;
+      if (field.name === '_gotcha') return true; // honeypot 無視
 
       let valid = true;
       if (field.required) {
@@ -91,7 +94,6 @@
           valid = field.value.trim() !== '';
         }
       }
-
       wrap.classList.toggle('error', !valid);
       return valid;
     };
@@ -104,23 +106,70 @@
       });
     });
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       let allValid = true;
       fields.forEach((field) => {
         if (!validateField(field)) allValid = false;
       });
 
-      if (allValid) {
-        if (successMsg) {
-          successMsg.classList.add('is-visible');
-          successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        form.reset();
-      } else {
+      if (!allValid) {
         const firstError = form.querySelector('.field.error');
-        if (firstError) {
-          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // Formspree が未設定の場合のガード
+      if (form.action.indexOf('YOUR_FORM_ID') !== -1) {
+        if (errorMsg) {
+          errorMsg.style.display = '';
+          errorMsg.classList.add('is-visible');
+          errorMsg.innerHTML = '✕ フォーム送信先が未設定です。<br>サイト管理者にFormspreeの設定をご依頼ください。';
+          errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
+      // 送信中UI
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+      }
+      if (successMsg) successMsg.classList.remove('is-visible');
+      if (errorMsg) {
+        errorMsg.classList.remove('is-visible');
+        errorMsg.style.display = 'none';
+      }
+
+      try {
+        const formData = new FormData(form);
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: { Accept: 'application/json' },
+        });
+
+        if (res.ok) {
+          form.reset();
+          if (successMsg) {
+            successMsg.classList.add('is-visible');
+            successMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        } else {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+      } catch (err) {
+        console.error('Form submit error:', err);
+        if (errorMsg) {
+          errorMsg.style.display = '';
+          errorMsg.classList.add('is-visible');
+          errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit →';
         }
       }
     });
