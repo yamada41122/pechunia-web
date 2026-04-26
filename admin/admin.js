@@ -382,11 +382,9 @@
           <div class="field">
             <label>カテゴリー</label>
             <select id="m_category">
-              <option value="girls">Girls Group</option>
-              <option value="boys">Boys Group</option>
+              <option value="group">Group</option>
               <option value="solo">Solo</option>
               <option value="unit">Unit</option>
-              <option value="performer">Performer</option>
             </select>
           </div>
         </div>
