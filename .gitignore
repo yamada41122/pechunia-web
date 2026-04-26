@@ -1,0 +1,33 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies (将来 npm 等を導入した場合の保険)
+node_modules/
+
+# Environment / secrets
+.env
+.env.local
+
+# Build output
+dist/
+build/
+
+# OS
+Thumbs.db

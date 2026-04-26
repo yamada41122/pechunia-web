@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact | PECHUNIA</title>
+<link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Montserrat:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="index.html" class="logo"><span class="logo-mark"></span>PECHUNIA</a>
+    <nav class="nav" id="nav">
+      <a href="index.html">HOME</a>
+      <a href="artists.html">ARTISTS</a>
+      <a href="news.html">NEWS</a>
+      <a href="audition.html">AUDITION</a>
+      <a href="company.html">COMPANY</a>
+      <a href="contact.html" class="btn btn--sm is-active">CONTACT</a>
+    </nav>
+    <button class="menu-toggle" id="menuToggle" aria-label="menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- Page Hero -->
+<section class="page-hero">
+  <div class="container">
+    <div class="crumb reveal">Home / Contact</div>
+    <h1 class="page-title reveal"><em>Contact</em></h1>
+    <p class="page-subtitle reveal">お問い合わせ</p>
+  </div>
+</section>
+
+<!-- Form -->
+<section class="section">
+  <div class="container">
+    <div class="content-block">
+      <p class="reveal" style="color:var(--text-secondary); margin-bottom:48px;">
+        各種お問い合わせは下記フォームよりお気軽にお寄せください。<br>
+        通常 3 営業日以内にご返信いたします。<br>
+        <small style="color:var(--text-tertiary);">※ファンレターは下記住所までご郵送ください。お返事は致しかねますのでご了承ください。</small>
+      </p>
+
+      <div id="formSuccess" class="form-success reveal">
+        ✓ お問い合わせを受け付けました。<br>担当者よりご連絡いたします。
+      </div>
+
+      <form class="form reveal" id="contactForm" novalidate>
+        <div class="field">
+          <label for="type">お問い合わせ種別 <span class="req">*</span></label>
+          <select id="type" name="type" required>
+            <option value="">選択してください</option>
+            <option value="general">一般のお問い合わせ</option>
+            <option value="press">取材のご依頼</option>
+            <option value="cast">出演・キャスティング依頼</option>
+            <option value="audition">オーディションについて</option>
+            <option value="business">業務提携・タイアップ</option>
+            <option value="other">その他</option>
+          </select>
+          <span class="error-msg">お問い合わせ種別を選択してください</span>
+        </div>
+
+        <div class="field">
+          <label for="name">お名前 / Name <span class="req">*</span></label>
+          <input type="text" id="name" name="name" placeholder="山田 太郎" required>
+          <span class="error-msg">お名前を入力してください</span>
+        </div>
+
+        <div class="field">
+          <label for="company">会社名・所属 / Company</label>
+          <input type="text" id="company" name="company" placeholder="株式会社〇〇">
+        </div>
+
+        <div class="field">
+          <label for="email">メールアドレス / Email <span class="req">*</span></label>
+          <input type="email" id="email" name="email" placeholder="example@email.com" required>
+          <span class="error-msg">有効なメールアドレスを入力してください</span>
+        </div>
+
+        <div class="field">
+          <label for="phone">電話番号 / Phone</label>
+          <input type="tel" id="phone" name="phone" placeholder="03-XXXX-XXXX">
+        </div>
+
+        <div class="field">
+          <label for="message">お問い合わせ内容 <span class="req">*</span></label>
+          <textarea id="message" name="message" placeholder="お問い合わせ内容をご記入ください。" required></textarea>
+          <span class="error-msg">お問い合わせ内容を入力してください</span>
+        </div>
+
+        <div class="field">
+          <label style="display:flex; gap:10px; align-items:center; cursor:pointer; text-transform:none; letter-spacing:0.04em; font-family:var(--font-jp); color:var(--text-secondary); font-weight:400;">
+            <input type="checkbox" id="agree" name="agree" required style="width:auto;">
+            <span>プライバシーポリシーに同意する <span class="req">*</span></span>
+          </label>
+          <span class="error-msg">同意が必要です</span>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn">Submit →</button>
+        </div>
+      </form>
+
+      <div style="margin-top:80px; padding-top:40px; border-top:1px solid var(--line);" class="reveal">
+        <div class="eyebrow">Direct Contact</div>
+        <dl class="company-table">
+          <div class="row"><dt>Email</dt><dd>info@pechunia.example</dd></div>
+          <div class="row"><dt>Tel</dt><dd>03-XXXX-XXXX（受付：平日 10:00-18:00）</dd></div>
+          <div class="row"><dt>Address</dt><dd>〒107-0062<br>東京都港区南青山 5-X-X PECHUNIA Building 6F</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo"><span class="logo-mark"></span>PECHUNIA</a>
+        <p>ひとりひとりの個性が、花咲く場所。<br>アイドル・アーティスト マネジメント・エージェンシー。</p>
+      </div>
+      <div class="footer-col">
+        <h4>Site Map</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="artists.html">Artists</a></li>
+          <li><a href="news.html">News</a></li>
+          <li><a href="audition.html">Audition</a></li>
+          <li><a href="company.html">Company</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="contact.html">お問い合わせ</a></li>
+          <li><a href="contact.html">取材・出演依頼</a></li>
+          <li><a href="audition.html">オーディション</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Social</h4>
+        <ul>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">X / Twitter</a></li>
+          <li><a href="#">YouTube</a></li>
+          <li><a href="#">TikTok</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 PECHUNIA Limited Liability Company.</div>
+      <div>All Rights Reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

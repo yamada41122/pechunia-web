@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="PECHUNIA mark">
+  <defs>
+    <clipPath id="markClip">
+      <circle cx="50" cy="50" r="46"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="50" cy="50" r="46" fill="#cfe3ee" stroke="#9bb6c4" stroke-width="1"/>
+
+  <g clip-path="url(#markClip)">
+    <g transform="translate(50 48) scale(0.42)">
+      <!-- Back gray petals -->
+      <path d="M -54 -18 C -64 -42 -42 -64 -18 -56 C -10 -36 -28 -14 -54 -18 Z"
+            fill="#a4b2bd" stroke="#7c8a96" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M 26 -52 C 42 -68 70 -56 72 -32 C 56 -22 32 -34 26 -52 Z"
+            fill="#a4b2bd" stroke="#7c8a96" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M -16 36 C -36 44 -56 26 -50 4 C -28 0 -10 18 -16 36 Z"
+            fill="#a4b2bd" stroke="#7c8a96" stroke-width="2.4" stroke-linejoin="round"/>
+      <!-- Front white petals -->
+      <path d="M 4 -56 C -16 -78 16 -94 36 -82 C 44 -64 24 -46 4 -56 Z"
+            fill="#ffffff" stroke="#7c8a96" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M 50 -22 C 76 -22 78 12 56 24 C 38 16 32 -14 50 -22 Z"
+            fill="#ffffff" stroke="#7c8a96" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M 22 22 C 36 46 8 64 -14 50 C -16 30 4 14 22 22 Z"
+            fill="#ffffff" stroke="#7c8a96" stroke-width="2.4" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
