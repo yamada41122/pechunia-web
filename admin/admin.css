@@ -432,6 +432,180 @@ input, select, textarea { font: inherit; color: inherit; }
   display: flex; justify-content: flex-end;
 }
 
+/* ---------- Image upload ---------- */
+.image-upload {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.image-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  border: 1px dashed var(--line-strong);
+  background: var(--bg-soft);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.image-preview.has-image {
+  border-style: solid;
+  border-color: var(--line);
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-placeholder {
+  text-align: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 36px;
+  color: rgba(126, 182, 209, 0.5);
+}
+
+.image-upload-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+
+.image-upload-input { display: none; }
+
+.image-upload-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.04em;
+}
+.image-upload-label:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  background: var(--bg-soft);
+}
+
+.image-upload-info {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.04em;
+}
+
+.image-remove-btn {
+  align-self: flex-start;
+  font-size: 11px;
+  color: var(--error);
+  padding: 4px 0;
+  letter-spacing: 0.04em;
+}
+.image-remove-btn:hover { text-decoration: underline; }
+
+/* ---------- Members editor ---------- */
+.members-section {
+  margin-top: 8px;
+  padding: 16px;
+  background: var(--bg-soft);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+}
+
+.members-section.hidden { display: none; }
+
+.members-section-head {
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.members-section-head h4 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.member-list {
+  display: grid;
+  gap: 8px;
+}
+
+.member-row {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.member-row:hover { border-color: var(--accent); }
+
+.member-thumb {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  background-size: cover;
+  background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 20px;
+  color: rgba(126, 182, 209, 0.6);
+  flex-shrink: 0;
+}
+
+.member-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.member-info .nm { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.member-info .rl { font-size: 12px; color: var(--text-tertiary); }
+
+.member-row .row-actions {
+  display: flex; gap: 6px;
+}
+.member-row .row-actions button {
+  padding: 5px 10px;
+  font-size: 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: #fff;
+  transition: all 0.15s ease;
+}
+.member-row .row-actions button:hover { border-color: var(--accent); color: var(--accent-strong); }
+.member-row .row-actions .btn-danger { color: var(--error); border-color: rgba(200,125,142,0.3); }
+.member-row .row-actions .btn-danger:hover { background: var(--error); color: #fff; border-color: var(--error); }
+
+.member-empty {
+  padding: 20px 12px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-style: italic;
+}
+
+@media (max-width: 600px) {
+  .image-upload { grid-template-columns: 1fr; }
+  .image-preview { width: 100%; height: 200px; }
+}
+
 /* ---------- Modal ---------- */
 .modal-overlay {
   position: fixed; inset: 0;

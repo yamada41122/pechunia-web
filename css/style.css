@@ -579,12 +579,18 @@ main, header, footer {
   align-items: center;
   justify-content: center;
   background: linear-gradient(160deg, var(--c1, #dceaf2) 0%, var(--c2, #ffffff) 100%);
+  background-size: cover;
+  background-position: center;
   font-family: var(--font-display);
   font-style: italic;
   font-size: clamp(64px, 10vw, 120px);
   letter-spacing: 0.02em;
   color: rgba(126, 182, 209, 0.30);
   transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.artist-card.has-image .visual {
+  color: transparent;
 }
 
 .artist-card::before {
@@ -877,30 +883,26 @@ main, header, footer {
   aspect-ratio: 3 / 4;
   border-radius: 12px;
   background: linear-gradient(160deg, #dceaf2 0%, #f6e9ec 100%);
+  background-size: cover;
+  background-position: center;
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow);
-}
-
-.artist-portrait::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.5), transparent 60%);
-}
-
-.artist-portrait::after {
-  content: "AOI";
-  position: absolute;
-  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.artist-portrait .initial {
   font-family: var(--font-display);
   font-style: italic;
   font-size: 140px;
   color: rgba(126, 182, 209, 0.30);
   letter-spacing: 0.02em;
+}
+
+.artist-portrait.has-image .initial {
+  display: none;
 }
 
 .artist-info h1 {

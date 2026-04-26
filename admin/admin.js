@@ -51,6 +51,22 @@
     audition: { obj: null, sha: null, dirty: false },
   };
 
+  // 保存待ちの画像 Blob: key="artist:luminas" or "member:luminas:aoi" → { blob, ext, path }
+  const pendingImages = new Map();
+
+  // 削除待ちの画像パス（既存画像を削除する）
+  const pendingImageDeletes = new Set();
+
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+  const getExt = (filename) => {
+    const m = filename.match(/\.([a-zA-Z0-9]+)$/);
+    return m ? m[1].toLowerCase() : 'jpg';
+  };
+
+  const artistImagePath = (artistId, ext) => `img/artists/${artistId}.${ext}`;
+  const memberImagePath = (groupId, memberId, ext) => `img/artists/${groupId}-${memberId}.${ext}`;
+
   // ---------- Auto-detect owner/repo from current URL ----------
   const detectFromURL = () => {
     // GitHub Pages: https://<user>.github.io/<repo>/admin/
@@ -315,13 +331,19 @@
       artistsEditor.innerHTML = '<div class="row-empty">アーティストがいません。「+ 新規アーティストを追加」から登録できます。</div>';
       return;
     }
-    artistsEditor.innerHTML = list.map((item, idx) => `
+    artistsEditor.innerHTML = list.map((item, idx) => {
+      const memberCount = (item.memberItems || []).length;
+      const memberInfo = (item.category === 'group' || item.category === 'unit') && memberCount > 0
+        ? ` ・ ${memberCount}名のメンバー登録済み`
+        : '';
+      const thumbStyle = item.image ? `background-image:url('../${escapeHtml(item.image)}');background-size:cover;background-position:center;color:transparent;` : '';
+      return `
       <div class="row-card" data-idx="${idx}">
         <div class="row-handle">⋮⋮</div>
-        <div class="artist-thumb ${escapeHtml(item.colorVariant || 'c-1')}">${escapeHtml(item.initial || '')}</div>
+        <div class="artist-thumb ${escapeHtml(item.colorVariant || 'c-1')}" style="${thumbStyle}">${escapeHtml(item.initial || '')}</div>
         <div>
           <div class="artist-name">${escapeHtml(item.name)}</div>
-          <div class="artist-sub">N° ${escapeHtml(item.no || '')} ・ ${escapeHtml(item.role || '')} ・ ${escapeHtml(item.memberList || '')}</div>
+          <div class="artist-sub">N° ${escapeHtml(item.no || '')} ・ ${escapeHtml(item.role || '')} ・ ${escapeHtml(item.memberList || '')}${memberInfo}</div>
         </div>
         <div><span class="artist-cat-tag">${escapeHtml(item.category || '')}</span></div>
         <div class="row-actions">
@@ -331,7 +353,8 @@
           <button class="btn-danger" data-act="delete">削除</button>
         </div>
       </div>
-    `).join('');
+      `;
+    }).join('');
   };
 
   artistsEditor.addEventListener('click', (e) => {
@@ -368,8 +391,23 @@
     const isNew = idx < 0;
     const nextNo = String(data.artists.list.length + 1).padStart(2, '0');
     const item = isNew
-      ? { id: '', no: nextNo, name: '', category: 'solo', role: '', members: '', memberList: '', colorVariant: 'c-1', initial: '', description: '' }
-      : { ...data.artists.list[idx] };
+      ? {
+          id: '', no: nextNo, name: '', category: 'solo', role: '',
+          members: '', memberList: '', colorVariant: 'c-1', initial: '',
+          description: '', image: null, memberItems: [],
+        }
+      : { ...data.artists.list[idx], memberItems: [...(data.artists.list[idx].memberItems || [])] };
+
+    // モーダル内のローカル画像状態（モーダル中にプレビュー表示・取り消し用）
+    let imageState = {
+      currentPath: item.image, // 既存JSONに保存されているパス
+      previewUrl: item.image ? `../${item.image}` : null,
+      pendingFile: null, // 新しく選んだファイル
+      removed: false,
+    };
+
+    // モーダル内のメンバー状態（外部の memberItems を編集する用）
+    let memberItems = item.memberItems.map((m) => ({ ...m }));
 
     openModal({
       title: isNew ? 'アーティストを追加' : 'アーティストを編集',
@@ -392,9 +430,25 @@
           <label>名前 / Name</label>
           <input type="text" id="m_name" value="${escapeHtml(item.name)}" placeholder="LUMINAS">
         </div>
+        <div class="field">
+          <label>画像（最大 5MB）</label>
+          <div class="image-upload">
+            <div class="image-preview ${imageState.previewUrl ? 'has-image' : ''}" id="m_imgPreview">
+              ${imageState.previewUrl ? `<img src="${escapeHtml(imageState.previewUrl)}" alt="">` : `<div class="image-preview-placeholder">${escapeHtml(item.initial || 'A')}</div>`}
+            </div>
+            <div class="image-upload-controls">
+              <label class="image-upload-label">
+                <input type="file" accept="image/*" class="image-upload-input" id="m_imgFile">
+                画像を選択
+              </label>
+              <span class="image-upload-info">JPG / PNG / WebP ・5MB以内</span>
+              ${imageState.previewUrl ? `<button type="button" class="image-remove-btn" id="m_imgRemove">画像を削除</button>` : ''}
+            </div>
+          </div>
+        </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
           <div class="field">
-            <label>イニシャル（カード表示）</label>
+            <label>イニシャル（画像なし時の表示）</label>
             <input type="text" id="m_initial" value="${escapeHtml(item.initial)}" placeholder="L" maxlength="2">
           </div>
           <div class="field">
@@ -414,36 +468,213 @@
           <input type="text" id="m_role" value="${escapeHtml(item.role)}" placeholder="Girls Group">
         </div>
         <div class="field">
-          <label>メンバー表記 / Members</label>
+          <label>メンバー表記 / Members（カード表示用）</label>
           <input type="text" id="m_members" value="${escapeHtml(item.members)}" placeholder="5 Members">
         </div>
         <div class="field">
-          <label>メンバー名一覧</label>
+          <label>メンバー名一覧（カード表示用）</label>
           <input type="text" id="m_memberList" value="${escapeHtml(item.memberList)}" placeholder="AOI / MIKU / RIN / YUMA / SAKI">
         </div>
         <div class="field">
           <label>説明（任意）</label>
           <textarea id="m_description" rows="3">${escapeHtml(item.description || '')}</textarea>
         </div>
+
+        <div class="members-section ${item.category === 'group' || item.category === 'unit' ? '' : 'hidden'}" id="m_membersSection">
+          <div class="members-section-head">
+            <h4>メンバー</h4>
+            <button type="button" class="btn-ghost" id="m_addMember" style="padding:6px 14px; font-size:12px;">+ メンバーを追加</button>
+          </div>
+          <div class="member-list" id="m_memberList_ui"></div>
+        </div>
       `,
       onOpen: () => {
         $('#m_category').value = item.category;
         $('#m_color').value = item.colorVariant;
+
+        const renderMembers = () => {
+          const ul = $('#m_memberList_ui');
+          if (!memberItems.length) {
+            ul.innerHTML = '<div class="member-empty">メンバーが未登録です。「+ メンバーを追加」から登録してください。</div>';
+            return;
+          }
+          ul.innerHTML = memberItems.map((m, i) => {
+            const memberKey = `member:${item.id || 'new'}:${m.id}`;
+            const pending = pendingImages.get(memberKey);
+            const previewUrl = pending ? URL.createObjectURL(pending.blob) : (m.image ? `../${m.image}` : null);
+            const thumbStyle = previewUrl ? `background-image:url('${previewUrl}')` : '';
+            return `
+              <div class="member-row" data-idx="${i}">
+                <div class="member-thumb" style="${thumbStyle}">${previewUrl ? '' : escapeHtml(m.initial || m.name.charAt(0).toUpperCase())}</div>
+                <div class="member-info">
+                  <span class="nm">${escapeHtml(m.name)}${m.nameJa ? ` <span style="color:var(--text-tertiary);font-weight:400;font-size:12px;">/ ${escapeHtml(m.nameJa)}</span>` : ''}</span>
+                  <span class="rl">${escapeHtml(m.role || '')}</span>
+                </div>
+                <div class="row-actions">
+                  <button type="button" data-mact="up">↑</button>
+                  <button type="button" data-mact="down">↓</button>
+                  <button type="button" data-mact="edit">編集</button>
+                  <button type="button" class="btn-danger" data-mact="delete">削除</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        };
+        renderMembers();
+
+        // カテゴリー変更でメンバーセクションの表示切替
+        $('#m_category').addEventListener('change', (e) => {
+          const v = e.target.value;
+          $('#m_membersSection').classList.toggle('hidden', v !== 'group' && v !== 'unit');
+        });
+
+        // 画像ファイル選択
+        const fileInput = $('#m_imgFile');
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          if (!file.type.startsWith('image/')) {
+            toast('画像ファイルを選択してください', 'error'); return;
+          }
+          if (file.size > MAX_IMAGE_SIZE) {
+            toast('5MB以内の画像を選択してください', 'error'); return;
+          }
+          imageState.pendingFile = file;
+          imageState.removed = false;
+          imageState.previewUrl = URL.createObjectURL(file);
+          updateImagePreview();
+        });
+
+        const updateImagePreview = () => {
+          const preview = $('#m_imgPreview');
+          const initial = $('#m_initial').value.trim() || item.initial || 'A';
+          if (imageState.previewUrl) {
+            preview.classList.add('has-image');
+            preview.innerHTML = `<img src="${imageState.previewUrl}" alt="">`;
+          } else {
+            preview.classList.remove('has-image');
+            preview.innerHTML = `<div class="image-preview-placeholder">${escapeHtml(initial)}</div>`;
+          }
+          // 削除ボタンの表示制御
+          const controls = preview.parentElement.querySelector('.image-upload-controls');
+          let removeBtn = controls.querySelector('#m_imgRemove');
+          if (imageState.previewUrl && !removeBtn) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.id = 'm_imgRemove';
+            btn.className = 'image-remove-btn';
+            btn.textContent = '画像を削除';
+            btn.addEventListener('click', () => {
+              imageState.pendingFile = null;
+              imageState.previewUrl = null;
+              imageState.removed = true;
+              updateImagePreview();
+            });
+            controls.appendChild(btn);
+          } else if (!imageState.previewUrl && removeBtn) {
+            removeBtn.remove();
+          }
+        };
+
+        // 既存の削除ボタン
+        const initialRemove = $('#m_imgRemove');
+        if (initialRemove) {
+          initialRemove.addEventListener('click', () => {
+            imageState.pendingFile = null;
+            imageState.previewUrl = null;
+            imageState.removed = true;
+            updateImagePreview();
+          });
+        }
+
+        // メンバーアクション
+        const parentArtistKey = item.id || 'new';
+        $('#m_addMember').addEventListener('click', () => {
+          openMemberModal(-1, memberItems, parentArtistKey, () => renderMembers());
+        });
+
+        $('#m_memberList_ui').addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-mact]');
+          if (!btn) return;
+          const row = btn.closest('.member-row');
+          const i = parseInt(row.dataset.idx, 10);
+          const act = btn.dataset.mact;
+          if (act === 'edit') {
+            openMemberModal(i, memberItems, parentArtistKey, () => renderMembers());
+          } else if (act === 'delete') {
+            if (!confirm('このメンバーを削除します。よろしいですか？')) return;
+            const m = memberItems[i];
+            // 既存画像も削除対象に
+            if (m.image) pendingImageDeletes.add(m.image);
+            // 保存待ち画像も破棄
+            const groupKey = item.id || 'new';
+            pendingImages.delete(`member:${groupKey}:${m.id}`);
+            memberItems.splice(i, 1);
+            renderMembers();
+          } else if (act === 'up' && i > 0) {
+            [memberItems[i - 1], memberItems[i]] = [memberItems[i], memberItems[i - 1]];
+            renderMembers();
+          } else if (act === 'down' && i < memberItems.length - 1) {
+            [memberItems[i + 1], memberItems[i]] = [memberItems[i], memberItems[i + 1]];
+            renderMembers();
+          }
+        });
       },
       onSave: () => {
         const name = $('#m_name').value.trim();
         if (!name) { toast('名前を入力してください', 'error'); return false; }
+        const category = $('#m_category').value;
+        const artistId = item.id || slugify(name);
+
+        // 画像の保留処理
+        let imageField = item.image; // デフォルトは元の値
+        if (imageState.removed) {
+          if (item.image) pendingImageDeletes.add(item.image);
+          imageField = null;
+          // 保存待ちもクリア
+          pendingImages.delete(`artist:${artistId}`);
+        }
+        if (imageState.pendingFile) {
+          const ext = getExt(imageState.pendingFile.name);
+          const path = artistImagePath(artistId, ext);
+          // 既存と異なる拡張子の場合、旧画像を削除対象に
+          if (item.image && item.image !== path) {
+            pendingImageDeletes.add(item.image);
+          }
+          pendingImages.set(`artist:${artistId}`, { blob: imageState.pendingFile, ext, path });
+          imageField = path;
+        }
+
+        // memberItems の画像保留処理：modal内 pendingImages の key を新しい artistId に張り直す
+        // （新規アーティスト時は仮ID 'new' を artistId に置き換え）
+        const finalMembers = memberItems.map((m) => {
+          const tempKey = `member:${item.id || 'new'}:${m.id}`;
+          const finalKey = `member:${artistId}:${m.id}`;
+          if (pendingImages.has(tempKey)) {
+            const entry = pendingImages.get(tempKey);
+            const newPath = memberImagePath(artistId, m.id, entry.ext);
+            pendingImages.delete(tempKey);
+            pendingImages.set(finalKey, { ...entry, path: newPath });
+            // 既存画像のパスが新しいパスと違う場合は削除対象に
+            if (m.image && m.image !== newPath) pendingImageDeletes.add(m.image);
+            return { ...m, image: newPath };
+          }
+          return m;
+        });
+
         const updated = {
-          id: item.id || slugify(name),
+          id: artistId,
           no: $('#m_no').value.trim(),
           name,
-          category: $('#m_category').value,
+          category,
           role: $('#m_role').value.trim(),
           members: $('#m_members').value.trim(),
           memberList: $('#m_memberList').value.trim(),
           colorVariant: $('#m_color').value,
           initial: $('#m_initial').value.trim() || name.charAt(0).toUpperCase(),
           description: $('#m_description').value.trim(),
+          image: imageField,
+          memberItems: (category === 'group' || category === 'unit') ? finalMembers : [],
         };
         if (isNew) data.artists.list.push(updated);
         else data.artists.list[idx] = updated;
@@ -454,10 +685,184 @@
     });
   };
 
+  // ============================================================
+  // Member Modal (nested)
+  // ============================================================
+  const memberModal = $('#memberModal');
+  const memberModalTitle = $('#memberModalTitle');
+  const memberModalBody = $('#memberModalBody');
+  const memberModalSave = $('#memberModalSave');
+  const memberModalCancel = $('#memberModalCancel');
+  const memberModalClose = $('#memberModalClose');
+
+  let currentMemberSave = null;
+
+  const openMemberModal = (idx, memberItems, parentArtistKey, onUpdated) => {
+    const isNew = idx < 0;
+    const m = isNew
+      ? { id: '', name: '', nameJa: '', role: '', image: null, initial: '' }
+      : { ...memberItems[idx] };
+
+    let imageState = {
+      currentPath: m.image,
+      previewUrl: m.image ? `../${m.image}` : null,
+      pendingFile: null,
+      removed: false,
+    };
+
+    memberModalTitle.textContent = isNew ? 'メンバーを追加' : 'メンバーを編集';
+    memberModalBody.innerHTML = `
+      <div class="field">
+        <label>名前 / Name</label>
+        <input type="text" id="mm_name" value="${escapeHtml(m.name)}" placeholder="AOI">
+      </div>
+      <div class="field">
+        <label>日本語表記（任意）</label>
+        <input type="text" id="mm_nameJa" value="${escapeHtml(m.nameJa || '')}" placeholder="蒼">
+      </div>
+      <div class="field">
+        <label>役柄ラベル / Role</label>
+        <input type="text" id="mm_role" value="${escapeHtml(m.role || '')}" placeholder="Leader / Main Vocal">
+      </div>
+      <div class="field">
+        <label>イニシャル（画像なし時の表示）</label>
+        <input type="text" id="mm_initial" value="${escapeHtml(m.initial || '')}" placeholder="A" maxlength="2">
+      </div>
+      <div class="field">
+        <label>画像（最大 5MB）</label>
+        <div class="image-upload">
+          <div class="image-preview ${imageState.previewUrl ? 'has-image' : ''}" id="mm_imgPreview">
+            ${imageState.previewUrl ? `<img src="${escapeHtml(imageState.previewUrl)}" alt="">` : `<div class="image-preview-placeholder">${escapeHtml(m.initial || (m.name && m.name.charAt(0)) || 'A')}</div>`}
+          </div>
+          <div class="image-upload-controls">
+            <label class="image-upload-label">
+              <input type="file" accept="image/*" class="image-upload-input" id="mm_imgFile">
+              画像を選択
+            </label>
+            <span class="image-upload-info">JPG / PNG / WebP ・5MB以内</span>
+            <button type="button" class="image-remove-btn" id="mm_imgRemove" style="${imageState.previewUrl ? '' : 'display:none;'}">画像を削除</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    memberModal.classList.remove('hidden');
+
+    // 画像選択
+    const fileInput = $('#mm_imgFile');
+    const removeBtn = $('#mm_imgRemove');
+    const updatePreview = () => {
+      const preview = $('#mm_imgPreview');
+      const initial = $('#mm_initial').value.trim() || m.initial || ($('#mm_name').value.trim().charAt(0)) || 'A';
+      if (imageState.previewUrl) {
+        preview.classList.add('has-image');
+        preview.innerHTML = `<img src="${imageState.previewUrl}" alt="">`;
+        removeBtn.style.display = '';
+      } else {
+        preview.classList.remove('has-image');
+        preview.innerHTML = `<div class="image-preview-placeholder">${escapeHtml(initial)}</div>`;
+        removeBtn.style.display = 'none';
+      }
+    };
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { toast('画像を選択してください', 'error'); return; }
+      if (file.size > MAX_IMAGE_SIZE) { toast('5MB以内', 'error'); return; }
+      imageState.pendingFile = file;
+      imageState.removed = false;
+      imageState.previewUrl = URL.createObjectURL(file);
+      updatePreview();
+    });
+    removeBtn.addEventListener('click', () => {
+      imageState.pendingFile = null;
+      imageState.previewUrl = null;
+      imageState.removed = true;
+      updatePreview();
+    });
+
+    currentMemberSave = () => {
+      const name = $('#mm_name').value.trim();
+      if (!name) { toast('名前を入力してください', 'error'); return false; }
+      const memberId = m.id || slugify(name);
+
+      const tempKey = `member:${parentArtistKey}:${memberId}`;
+      if (imageState.removed) {
+        if (m.image) pendingImageDeletes.add(m.image);
+        pendingImages.delete(tempKey);
+      }
+      if (imageState.pendingFile) {
+        const ext = getExt(imageState.pendingFile.name);
+        pendingImages.set(tempKey, {
+          blob: imageState.pendingFile,
+          ext,
+          path: null, // 親モーダル側で artistId 確定後に補完
+        });
+      }
+
+      const updated = {
+        id: memberId,
+        name,
+        nameJa: $('#mm_nameJa').value.trim(),
+        role: $('#mm_role').value.trim(),
+        initial: $('#mm_initial').value.trim() || name.charAt(0).toUpperCase(),
+        image: imageState.removed ? null : (imageState.pendingFile ? null : m.image),
+      };
+      if (isNew) memberItems.push(updated);
+      else memberItems[idx] = updated;
+      onUpdated();
+      return true;
+    };
+  };
+
+  const closeMemberModal = () => {
+    memberModal.classList.add('hidden');
+    memberModalBody.innerHTML = '';
+    currentMemberSave = null;
+  };
+
+  memberModalSave.addEventListener('click', () => {
+    if (typeof currentMemberSave === 'function') {
+      const ok = currentMemberSave();
+      if (ok !== false) closeMemberModal();
+    } else {
+      closeMemberModal();
+    }
+  });
+  memberModalCancel.addEventListener('click', closeMemberModal);
+  memberModalClose.addEventListener('click', closeMemberModal);
+  memberModal.addEventListener('click', (e) => { if (e.target === memberModal) closeMemberModal(); });
+
   const saveArtists = async () => {
-    if (!data.artists.dirty) { toast('変更はありません'); return; }
-    showLoading('変更を保存中...');
+    if (!data.artists.dirty && pendingImages.size === 0 && pendingImageDeletes.size === 0) {
+      toast('変更はありません');
+      return;
+    }
     try {
+      // 1. 画像のアップロード
+      let i = 0;
+      const total = pendingImages.size + pendingImageDeletes.size;
+      for (const [key, entry] of pendingImages) {
+        i++;
+        showLoading(`画像をアップロード中... (${i}/${total})`);
+        await GH.uploadBinary(entry.path, entry.blob, `[admin] upload ${entry.path}`);
+      }
+      pendingImages.clear();
+
+      // 2. 不要画像の削除
+      for (const path of pendingImageDeletes) {
+        i++;
+        showLoading(`画像を整理中... (${i}/${total})`);
+        try {
+          await GH.deleteFile(path, `[admin] delete ${path}`);
+        } catch (err) {
+          console.warn('画像削除失敗:', path, err);
+        }
+      }
+      pendingImageDeletes.clear();
+
+      // 3. JSON 保存
+      showLoading('変更を保存中...');
       const result = await GH.updateJSON('data/artists.json', data.artists.list, '[admin] update artists', data.artists.sha);
       data.artists.sha = result.content.sha;
       data.artists.dirty = false;

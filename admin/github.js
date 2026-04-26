@@ -146,6 +146,71 @@
     return updateFile(path, content, message, sha);
   };
 
+  // ---------- Binary file upload ----------
+  // Blob/File → base64
+  const blobToBase64 = (blob) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        // "data:image/...;base64,XXXX" の "XXXX" 部分のみ
+        const idx = result.indexOf(',');
+        resolve(idx >= 0 ? result.slice(idx + 1) : result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+  // 既存ファイルのSHAを取得（存在しない場合はnull）
+  const tryGetSha = async (path) => {
+    try {
+      const data = await apiFetch(
+        `/repos/${state.owner}/${state.repo}/contents/${path}?ref=${state.branch}`
+      );
+      return data.sha;
+    } catch (err) {
+      if (err.status === 404) return null;
+      throw err;
+    }
+  };
+
+  // バイナリアップロード（既存ファイルがあれば自動で上書き）
+  const uploadBinary = async (path, blob, message) => {
+    const base64 = await blobToBase64(blob);
+    const sha = await tryGetSha(path);
+    const body = {
+      message: message || `[admin] upload ${path}`,
+      content: base64,
+      branch: state.branch,
+      committer: state.user
+        ? {
+            name: state.user.name || state.user.login,
+            email: state.user.email || `${state.user.login}@users.noreply.github.com`,
+          }
+        : undefined,
+    };
+    if (sha) body.sha = sha;
+
+    return apiFetch(`/repos/${state.owner}/${state.repo}/contents/${path}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  };
+
+  // ファイル削除
+  const deleteFile = async (path, message) => {
+    const sha = await tryGetSha(path);
+    if (!sha) return null;
+    return apiFetch(`/repos/${state.owner}/${state.repo}/contents/${path}`, {
+      method: 'DELETE',
+      body: JSON.stringify({
+        message: message || `[admin] delete ${path}`,
+        sha,
+        branch: state.branch,
+      }),
+    });
+  };
+
   // 公開
   window.PechuniaGitHub = {
     state,
@@ -158,5 +223,8 @@
     getJSON,
     updateFile,
     updateJSON,
+    uploadBinary,
+    deleteFile,
+    tryGetSha,
   };
 })();
