@@ -24,6 +24,14 @@
     return res.json();
   };
 
+  // SNSラベル（アーティスト/メンバー共通）
+  const SOCIAL_LABELS = {
+    instagram: 'Instagram',
+    twitter: 'X / Twitter',
+    youtube: 'YouTube',
+    tiktok: 'TikTok',
+  };
+
   // ---------- News ----------
   // 公開判定：status が published かつ publishAt が空 or 過去
   const isNewsVisible = (item) => {
@@ -412,6 +420,16 @@
           .join('');
       }
 
+      // SNSリンク
+      const socialEl = document.querySelector('[data-detail="social-wrap"]');
+      if (socialEl) {
+        const links = ['instagram', 'twitter', 'youtube', 'tiktok']
+          .filter((k) => artist[k])
+          .map((k) => `<a href="${escapeHtml(artist[k])}" target="_blank" rel="noopener noreferrer" class="btn btn--ghost btn--sm">${SOCIAL_LABELS[k]}</a>`)
+          .join('');
+        socialEl.innerHTML = links;
+      }
+
       // メンバーセクション（group / unit のみ）
       const membersWrap = document.querySelector('[data-detail="members-section"]');
       const membersGrid = document.querySelector('[data-detail="members-grid"]');
@@ -433,13 +451,6 @@
   };
 
   // ---------- Member detail ----------
-  const SOCIAL_LABELS = {
-    instagram: 'Instagram',
-    twitter: 'X / Twitter',
-    youtube: 'YouTube',
-    tiktok: 'TikTok',
-  };
-
   const renderMemberDetail = async (opts = {}) => {
     try {
       const list = await fetchJSON(opts.dataPath || 'data/artists.json');

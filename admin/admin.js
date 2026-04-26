@@ -589,6 +589,7 @@
           id: '', no: nextNo, name: '', category: 'solo', role: '',
           members: '', memberList: '', colorVariant: 'c-1', initial: '',
           description: '', image: null, memberItems: [],
+          instagram: '', twitter: '', youtube: '', tiktok: '',
         }
       : { ...data.artists.list[idx], memberItems: [...(data.artists.list[idx].memberItems || [])] };
 
@@ -672,6 +673,25 @@
         <div class="field">
           <label>説明（任意）</label>
           <textarea id="m_description" rows="3">${escapeHtml(item.description || '')}</textarea>
+        </div>
+
+        <h4 style="font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--accent-strong); margin-top:8px;">SNS（任意）</h4>
+
+        <div class="field">
+          <label>Instagram URL</label>
+          <input type="url" id="m_instagram" value="${escapeHtml(item.instagram || '')}" placeholder="https://www.instagram.com/...">
+        </div>
+        <div class="field">
+          <label>X / Twitter URL</label>
+          <input type="url" id="m_twitter" value="${escapeHtml(item.twitter || '')}" placeholder="https://x.com/...">
+        </div>
+        <div class="field">
+          <label>YouTube URL</label>
+          <input type="url" id="m_youtube" value="${escapeHtml(item.youtube || '')}" placeholder="https://www.youtube.com/...">
+        </div>
+        <div class="field">
+          <label>TikTok URL</label>
+          <input type="url" id="m_tiktok" value="${escapeHtml(item.tiktok || '')}" placeholder="https://www.tiktok.com/...">
         </div>
 
         <div class="members-section ${item.category === 'group' || item.category === 'unit' ? '' : 'hidden'}" id="m_membersSection">
@@ -868,6 +888,10 @@
           initial: $('#m_initial').value.trim() || name.charAt(0).toUpperCase(),
           description: $('#m_description').value.trim(),
           image: imageField,
+          instagram: $('#m_instagram').value.trim(),
+          twitter: $('#m_twitter').value.trim(),
+          youtube: $('#m_youtube').value.trim(),
+          tiktok: $('#m_tiktok').value.trim(),
           memberItems: (category === 'group' || category === 'unit') ? finalMembers : [],
         };
         if (isNew) data.artists.list.push(updated);
