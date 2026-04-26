@@ -1,6 +1,33 @@
 {
   "items": [
-    { "type": "artist", "id": "luminas" },
-    { "type": "artist", "id": "nexion" }
+    {
+      "type": "artist",
+      "id": "luminas"
+    },
+    {
+      "type": "member",
+      "artistId": "luminas",
+      "memberId": "kirara"
+    },
+    {
+      "type": "member",
+      "artistId": "luminas",
+      "memberId": "rii"
+    },
+    {
+      "type": "member",
+      "artistId": "luminas",
+      "memberId": "misuzu"
+    },
+    {
+      "type": "member",
+      "artistId": "luminas",
+      "memberId": "non"
+    },
+    {
+      "type": "member",
+      "artistId": "luminas",
+      "memberId": "mirai"
+    }
   ]
 }
