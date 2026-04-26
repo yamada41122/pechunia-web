@@ -15,19 +15,8 @@
       "memberId": "rii"
     },
     {
-      "type": "member",
-      "artistId": "luminas",
-      "memberId": "misuzu"
-    },
-    {
-      "type": "member",
-      "artistId": "luminas",
-      "memberId": "non"
-    },
-    {
-      "type": "member",
-      "artistId": "luminas",
-      "memberId": "mirai"
+      "type": "artist",
+      "id": "item-1777192164905"
     }
   ]
 }
