@@ -69,6 +69,35 @@
 
   const artistImagePath = (artistId, ext) => `img/artists/${artistId}.${ext}`;
   const memberImagePath = (groupId, memberId, ext) => `img/artists/${groupId}-${memberId}.${ext}`;
+  const newsImagePath = (newsId, ext) => `img/news/${newsId}.${ext}`;
+
+  // 公開判定（管理画面表示用）
+  const newsStatusInfo = (item) => {
+    const status = item.status || 'published';
+    if (status === 'draft') return { key: 'draft', label: '下書き' };
+    if (status === 'private') return { key: 'private', label: '非公開' };
+    if (item.publishAt) {
+      const t = new Date(item.publishAt);
+      if (!isNaN(t.getTime()) && t.getTime() > Date.now()) {
+        return { key: 'scheduled', label: '予約' };
+      }
+    }
+    return { key: 'published', label: '公開中' };
+  };
+
+  // datetime-local 用のフォーマット変換
+  const toDatetimeLocal = (str) => {
+    if (!str) return '';
+    const t = new Date(str);
+    if (isNaN(t.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}T${pad(t.getHours())}:${pad(t.getMinutes())}`;
+  };
+
+  const fromDatetimeLocal = (val) => {
+    if (!val) return '';
+    return new Date(val).toISOString();
+  };
 
   // ---------- Auto-detect owner/repo from current URL ----------
   const detectFromURL = () => {
@@ -225,12 +254,21 @@
       newsEditor.innerHTML = '<div class="row-empty">ニュースがありません。「+ 新規ニュースを追加」から作成できます。</div>';
       return;
     }
-    newsEditor.innerHTML = list.map((item, idx) => `
+    newsEditor.innerHTML = list.map((item, idx) => {
+      const st = newsStatusInfo(item);
+      return `
       <div class="row-card" data-idx="${idx}">
         <div class="row-handle" title="ドラッグで並び替え">⋮⋮</div>
         <div class="row-date">${escapeHtml(item.date)}</div>
-        <div><span class="row-tag is-${escapeHtml(item.category)}">${escapeHtml(item.category || '')}</span></div>
-        <div class="row-title">${escapeHtml(item.title)}</div>
+        <div><span class="status-badge is-${st.key}">${escapeHtml(st.label)}</span></div>
+        <div>
+          <div class="row-title">${escapeHtml(item.title)}</div>
+          <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="row-tag is-${escapeHtml(item.category)}">${escapeHtml(item.category || '')}</span>
+            ${item.image ? '<span style="font-size:11px; color:var(--text-tertiary);">📷 画像あり</span>' : ''}
+            ${item.publishAt && st.key === 'scheduled' ? `<span style="font-size:11px; color:var(--accent-strong);">⏰ ${escapeHtml(new Date(item.publishAt).toLocaleString('ja-JP'))}</span>` : ''}
+          </div>
+        </div>
         <div class="row-actions">
           <button data-act="up">↑</button>
           <button data-act="down">↓</button>
@@ -238,7 +276,8 @@
           <button class="btn-danger" data-act="delete">削除</button>
         </div>
       </div>
-    `).join('');
+      `;
+    }).join('');
   };
 
   newsEditor.addEventListener('click', (e) => {
@@ -274,38 +313,157 @@
   const openNewsModal = (idx) => {
     const isNew = idx < 0;
     const item = isNew
-      ? { id: '', date: formatToday(), category: 'info', title: '' }
+      ? {
+          id: '', date: formatToday(), category: 'info', title: '',
+          body: '', image: null, status: 'published', publishAt: '',
+        }
       : { ...data.news.list[idx] };
+
+    let imageState = {
+      currentPath: item.image,
+      previewUrl: item.image ? `../${item.image}` : null,
+      pendingFile: null,
+      removed: false,
+    };
 
     openModal({
       title: isNew ? 'ニュースを追加' : 'ニュースを編集',
       body: `
-        <div class="field">
-          <label>日付</label>
-          <input type="text" id="m_date" value="${escapeHtml(item.date)}" placeholder="YYYY.MM.DD">
+        <h4 style="font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--accent-strong); margin-top:-4px;">基本情報</h4>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="field">
+            <label>日付（表示用）</label>
+            <input type="text" id="m_date" value="${escapeHtml(item.date)}" placeholder="2026.04.18">
+          </div>
+          <div class="field">
+            <label>カテゴリー</label>
+            <select id="m_category">
+              <option value="live">LIVE（公演）</option>
+              <option value="media">MEDIA（メディア）</option>
+              <option value="info">INFO（お知らせ）</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label>カテゴリー</label>
-          <select id="m_category">
-            <option value="live">LIVE（公演）</option>
-            <option value="media">MEDIA（メディア）</option>
-            <option value="info">INFO（お知らせ）</option>
-          </select>
-        </div>
+
         <div class="field">
           <label>タイトル</label>
-          <textarea id="m_title" rows="3" placeholder="ニュース本文">${escapeHtml(item.title)}</textarea>
+          <textarea id="m_title" rows="2" placeholder="ニュースタイトル">${escapeHtml(item.title)}</textarea>
+        </div>
+
+        <div class="field">
+          <label>アイキャッチ画像（最大 5MB）</label>
+          <div class="image-upload">
+            <div class="image-preview ${imageState.previewUrl ? 'has-image' : ''}" id="n_imgPreview">
+              ${imageState.previewUrl ? `<img src="${escapeHtml(imageState.previewUrl)}" alt="">` : `<div class="image-preview-placeholder">📷</div>`}
+            </div>
+            <div class="image-upload-controls">
+              <label class="image-upload-label">
+                <input type="file" accept="image/*" class="image-upload-input" id="n_imgFile">
+                画像を選択
+              </label>
+              <span class="image-upload-info">JPG / PNG / WebP ・5MB以内</span>
+              <button type="button" class="image-remove-btn" id="n_imgRemove" style="${imageState.previewUrl ? '' : 'display:none;'}">画像を削除</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>本文</label>
+          <textarea id="m_body" rows="10" placeholder="記事本文を入力。\nURLは自動でリンクになります。\nGoogle Maps や YouTube の埋め込みコード（&lt;iframe ...&gt;）はそのまま貼り付けてください。">${escapeHtml(item.body || '')}</textarea>
+          <small style="color:var(--text-tertiary); font-size:11px; line-height:1.6;">
+            ・URL（http:// http://〜）は自動で別タブリンクになります<br>
+            ・Google Maps の「埋め込みコード」（共有→地図を埋め込む→HTMLをコピー）の iframe をそのまま貼れます<br>
+            ・YouTube の埋め込みコードも同様に貼り付け可能です<br>
+            ・空行で段落分け、改行で行替え
+          </small>
+        </div>
+
+        <h4 style="font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--accent-strong); margin-top:8px;">公開設定</h4>
+
+        <div class="field">
+          <label>ステータス</label>
+          <select id="m_status">
+            <option value="published">公開（Published）</option>
+            <option value="draft">下書き（Draft）</option>
+            <option value="private">非公開（Private）</option>
+          </select>
+          <small style="color:var(--text-tertiary); font-size:11px;">下書き・非公開は公開サイトに表示されません。</small>
+        </div>
+
+        <div class="field">
+          <label>公開予約日時（任意）</label>
+          <input type="datetime-local" id="m_publishAt" value="${escapeHtml(toDatetimeLocal(item.publishAt))}">
+          <small style="color:var(--text-tertiary); font-size:11px;">設定すると、その日時を過ぎるまで公開サイトに表示されません（ステータスが「公開」の場合）。空欄なら即時公開。</small>
         </div>
       `,
-      onOpen: () => { $('#m_category').value = item.category; },
+      onOpen: () => {
+        $('#m_category').value = item.category;
+        $('#m_status').value = item.status || 'published';
+
+        const fileInput = $('#n_imgFile');
+        const removeBtn = $('#n_imgRemove');
+        const updatePreview = () => {
+          const preview = $('#n_imgPreview');
+          if (imageState.previewUrl) {
+            preview.classList.add('has-image');
+            preview.innerHTML = `<img src="${imageState.previewUrl}" alt="">`;
+            removeBtn.style.display = '';
+          } else {
+            preview.classList.remove('has-image');
+            preview.innerHTML = `<div class="image-preview-placeholder">📷</div>`;
+            removeBtn.style.display = 'none';
+          }
+        };
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          if (!file.type.startsWith('image/')) { toast('画像ファイルを選択してください', 'error'); return; }
+          if (file.size > MAX_IMAGE_SIZE) { toast('5MB以内の画像を選択してください', 'error'); return; }
+          imageState.pendingFile = file;
+          imageState.removed = false;
+          imageState.previewUrl = URL.createObjectURL(file);
+          updatePreview();
+        });
+        removeBtn.addEventListener('click', () => {
+          imageState.pendingFile = null;
+          imageState.previewUrl = null;
+          imageState.removed = true;
+          updatePreview();
+        });
+      },
       onSave: () => {
         const date = $('#m_date').value.trim();
         const category = $('#m_category').value;
         const title = $('#m_title').value.trim();
+        const body = $('#m_body').value;
+        const status = $('#m_status').value;
+        const publishAtRaw = $('#m_publishAt').value;
+        const publishAt = publishAtRaw ? fromDatetimeLocal(publishAtRaw) : '';
+
         if (!date || !title) { toast('日付とタイトルを入力してください', 'error'); return false; }
+
+        const newsId = item.id || `${date.replace(/\./g, '-')}-${slugify(title)}`;
+
+        // 画像保留処理
+        let imageField = item.image;
+        if (imageState.removed) {
+          if (item.image) pendingImageDeletes.add(item.image);
+          imageField = null;
+          pendingImages.delete(`news:${newsId}`);
+        }
+        if (imageState.pendingFile) {
+          const ext = getExt(imageState.pendingFile.name);
+          const path = newsImagePath(newsId, ext);
+          if (item.image && item.image !== path) pendingImageDeletes.add(item.image);
+          pendingImages.set(`news:${newsId}`, { blob: imageState.pendingFile, ext, path });
+          imageField = path;
+        }
+
         const updated = {
-          id: item.id || `${date.replace(/\./g, '-')}-${slugify(title)}`,
+          id: newsId,
           date, category, title,
+          body, image: imageField, status, publishAt,
         };
         if (isNew) data.news.list.unshift(updated);
         else data.news.list[idx] = updated;
@@ -317,9 +475,33 @@
   };
 
   const saveNews = async () => {
-    if (!data.news.dirty) { toast('変更はありません'); return; }
-    showLoading('変更を保存中...');
+    // ニュース関連の保留画像を抽出
+    const newsPendingKeys = [...pendingImages.keys()].filter((k) => k.startsWith('news:'));
+    const newsPendingDeletes = [...pendingImageDeletes].filter((p) => p.startsWith('img/news/'));
+    if (!data.news.dirty && newsPendingKeys.length === 0 && newsPendingDeletes.length === 0) {
+      toast('変更はありません');
+      return;
+    }
     try {
+      let i = 0;
+      const total = newsPendingKeys.length + newsPendingDeletes.length;
+      // 画像アップロード
+      for (const key of newsPendingKeys) {
+        i++;
+        showLoading(`画像をアップロード中... (${i}/${total})`);
+        const entry = pendingImages.get(key);
+        await GH.uploadBinary(entry.path, entry.blob, `[admin] upload ${entry.path}`);
+        pendingImages.delete(key);
+      }
+      // 不要画像削除
+      for (const path of newsPendingDeletes) {
+        i++;
+        showLoading(`画像を整理中... (${i}/${total})`);
+        try { await GH.deleteFile(path, `[admin] delete ${path}`); } catch (e) { console.warn(e); }
+        pendingImageDeletes.delete(path);
+      }
+
+      showLoading('変更を保存中...');
       const result = await GH.updateJSON('data/news.json', data.news.list, '[admin] update news', data.news.sha);
       data.news.sha = result.content.sha;
       data.news.dirty = false;
@@ -944,23 +1126,27 @@
   memberModal.addEventListener('click', (e) => { if (e.target === memberModal) closeMemberModal(); });
 
   const saveArtists = async () => {
-    if (!data.artists.dirty && pendingImages.size === 0 && pendingImageDeletes.size === 0) {
+    // アーティスト関連の保留画像のみ抽出
+    const artistKeys = [...pendingImages.keys()].filter((k) => k.startsWith('artist:') || k.startsWith('member:'));
+    const artistDeletes = [...pendingImageDeletes].filter((p) => p.startsWith('img/artists/'));
+    if (!data.artists.dirty && artistKeys.length === 0 && artistDeletes.length === 0) {
       toast('変更はありません');
       return;
     }
     try {
       // 1. 画像のアップロード
       let i = 0;
-      const total = pendingImages.size + pendingImageDeletes.size;
-      for (const [key, entry] of pendingImages) {
+      const total = artistKeys.length + artistDeletes.length;
+      for (const key of artistKeys) {
         i++;
         showLoading(`画像をアップロード中... (${i}/${total})`);
+        const entry = pendingImages.get(key);
         await GH.uploadBinary(entry.path, entry.blob, `[admin] upload ${entry.path}`);
+        pendingImages.delete(key);
       }
-      pendingImages.clear();
 
       // 2. 不要画像の削除
-      for (const path of pendingImageDeletes) {
+      for (const path of artistDeletes) {
         i++;
         showLoading(`画像を整理中... (${i}/${total})`);
         try {
@@ -968,8 +1154,8 @@
         } catch (err) {
           console.warn('画像削除失敗:', path, err);
         }
+        pendingImageDeletes.delete(path);
       }
-      pendingImageDeletes.clear();
 
       // 3. JSON 保存
       showLoading('変更を保存中...');

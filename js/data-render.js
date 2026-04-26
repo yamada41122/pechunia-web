@@ -25,10 +25,19 @@
   };
 
   // ---------- News ----------
-  const renderNewsItem = (item, asLink = true) => {
+  // 公開判定：status が published かつ publishAt が空 or 過去
+  const isNewsVisible = (item) => {
+    if ((item.status || 'published') !== 'published') return false;
+    if (!item.publishAt) return true;
+    const t = new Date(item.publishAt);
+    if (isNaN(t.getTime())) return true; // 不正な日付は無視
+    return t.getTime() <= Date.now();
+  };
+
+  const renderNewsItem = (item) => {
     const tagClass = `is-${escapeHtml(item.category || 'info')}`;
     const tagLabel = (item.category || 'info').toUpperCase();
-    const href = asLink ? 'news.html' : '#';
+    const href = `news-detail.html?id=${escapeHtml(item.id || '')}`;
     return `
       <a href="${href}" class="news-item">
         <span class="news-date">${escapeHtml(item.date)}</span>
@@ -43,12 +52,122 @@
     if (!container) return;
     try {
       const list = await fetchJSON(opts.dataPath || 'data/news.json');
-      const limit = opts.limit || list.length;
-      const items = list.slice(0, limit);
-      container.innerHTML = items.map((item) => renderNewsItem(item, opts.linkable)).join('');
+      const visible = list.filter(isNewsVisible);
+      const limit = opts.limit || visible.length;
+      const items = visible.slice(0, limit);
+      if (items.length === 0) {
+        container.innerHTML = '<p style="padding:48px 24px; text-align:center; color:var(--text-tertiary);">表示するニュースがありません。</p>';
+        return;
+      }
+      container.innerHTML = items.map(renderNewsItem).join('');
     } catch (err) {
       console.error(err);
       container.innerHTML = '<p style="padding:24px; color:var(--text-tertiary);">ニュースの読み込みに失敗しました。</p>';
+    }
+  };
+
+  // ---------- News body parser ----------
+  // 許可するiframe src のドメイン
+  const IFRAME_ALLOW = [
+    'google.com/maps/embed',
+    'www.google.com/maps/embed',
+    'www.youtube.com/embed/',
+    'www.youtube-nocookie.com/embed/',
+    'player.vimeo.com/video/',
+  ];
+
+  const sanitizeIframe = (htmlStr) => {
+    // src を抽出
+    const srcMatch = htmlStr.match(/src=["']([^"']+)["']/i);
+    if (!srcMatch) return '';
+    const src = srcMatch[1];
+    if (!IFRAME_ALLOW.some((a) => src.includes(a))) return '';
+    return `<div class="news-embed"><iframe src="${escapeHtml(src)}" frameborder="0" allowfullscreen loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>`;
+  };
+
+  const parseNewsBody = (body) => {
+    if (!body) return '';
+    const segments = [];
+    const iframeRe = /<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi;
+    let lastIdx = 0;
+    let m;
+    while ((m = iframeRe.exec(body)) !== null) {
+      if (m.index > lastIdx) segments.push({ type: 'text', content: body.slice(lastIdx, m.index) });
+      segments.push({ type: 'iframe', content: sanitizeIframe(m[0]) });
+      lastIdx = m.index + m[0].length;
+    }
+    if (lastIdx < body.length) segments.push({ type: 'text', content: body.slice(lastIdx) });
+
+    return segments
+      .map((seg) => {
+        if (seg.type === 'iframe') return seg.content;
+        // テキストの場合：HTMLエスケープ → URL自動リンク → 改行を <br> / <p>
+        let txt = escapeHtml(seg.content);
+        // URL自動リンク（既にエスケープ済みなのでhref内に入れて安全）
+        txt = txt.replace(
+          /(https?:\/\/[^\s<>"'\u3000]+)/g,
+          '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+        );
+        // 段落分け（空行で段落、単一改行は<br>）
+        return txt
+          .split(/\n\s*\n/)
+          .filter((p) => p.trim().length > 0)
+          .map((para) => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+          .join('');
+      })
+      .join('');
+  };
+
+  // ---------- News detail ----------
+  const renderNewsDetail = async (opts = {}) => {
+    try {
+      const list = await fetchJSON(opts.dataPath || 'data/news.json');
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const item = id && list.find((n) => n.id === id);
+
+      if (!item || !isNewsVisible(item)) {
+        const titleEl = document.querySelector('[data-news="title"]');
+        const bodyEl = document.querySelector('[data-news="body"]');
+        if (titleEl) titleEl.textContent = '記事が見つかりません';
+        if (bodyEl) bodyEl.innerHTML = '<p style="color:var(--text-tertiary); margin:24px 0;">指定された記事は公開されていないか、削除された可能性があります。</p>';
+        return;
+      }
+
+      document.title = `${item.title} | News | PECHUNIA`;
+
+      const crumbEl = document.querySelector('[data-news="crumb"]');
+      if (crumbEl) crumbEl.textContent = `Home / News / ${item.title.slice(0, 30)}${item.title.length > 30 ? '…' : ''}`;
+
+      const dateEl = document.querySelector('[data-news="date"]');
+      if (dateEl) dateEl.textContent = item.date || '';
+
+      const tagEl = document.querySelector('[data-news="tag"]');
+      if (tagEl) {
+        tagEl.className = `news-tag is-${item.category || 'info'}`;
+        tagEl.textContent = (item.category || 'info').toUpperCase();
+      }
+
+      const titleEl = document.querySelector('[data-news="title"]');
+      if (titleEl) titleEl.textContent = item.title || '';
+
+      const imageEl = document.querySelector('[data-news="image"]');
+      if (imageEl) {
+        if (item.image) {
+          imageEl.style.display = '';
+          imageEl.innerHTML = `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.title)}">`;
+        } else {
+          imageEl.style.display = 'none';
+        }
+      }
+
+      const bodyEl = document.querySelector('[data-news="body"]');
+      if (bodyEl) {
+        if (item.body) bodyEl.innerHTML = parseNewsBody(item.body);
+        else bodyEl.innerHTML = '<p style="color:var(--text-tertiary);">本文が登録されていません。</p>';
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -456,10 +575,14 @@
     if (document.querySelector('[data-render="member-detail"]')) {
       renderMemberDetail();
     }
+
+    if (document.querySelector('[data-render="news-detail"]')) {
+      renderNewsDetail();
+    }
   };
 
   // 公開メソッド
-  window.PechuniaRender = { renderNews, renderArtists, renderFeatured, renderAudition, renderArtistDetail, renderMemberDetail };
+  window.PechuniaRender = { renderNews, renderArtists, renderFeatured, renderAudition, renderArtistDetail, renderMemberDetail, renderNewsDetail };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
