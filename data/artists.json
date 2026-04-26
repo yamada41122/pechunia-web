@@ -131,6 +131,28 @@
     "initial": "文",
     "description": "令和7年/東京/渋谷 楽曲派アイドル。\n人生の転機と新たな挑戦を象徴する、再スタートの物語文翠麗。",
     "image": "img/artists/item-1777192164905.jpg",
-    "memberItems": []
+    "memberItems": [
+      {
+        "id": "yokoi-honami",
+        "name": "YOKOI HONAMI",
+        "nameJa": "横井 ほなみ",
+        "furigana": "よこい ほなみ",
+        "role": "ラベンダーパープル",
+        "birthday": "",
+        "birthplace": "静岡県",
+        "bloodType": "",
+        "height": "",
+        "hobbies": "ゲーム",
+        "specialties": "",
+        "catchphrase": "",
+        "description": "",
+        "initial": "H",
+        "image": "img/artists/item-1777192164905-yokoi-honami.png",
+        "instagram": "",
+        "twitter": "https://x.com/yokoi__honami",
+        "youtube": "",
+        "tiktok": ""
+      }
+    ]
   }
 ]
