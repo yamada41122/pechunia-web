@@ -17,6 +17,16 @@
     {
       "type": "artist",
       "id": "item-1777192164905"
+    },
+    {
+      "type": "member",
+      "artistId": "item-1777192164905",
+      "memberId": "yokoi-honami"
+    },
+    {
+      "type": "member",
+      "artistId": "item-1777192164905",
+      "memberId": "ichinose-miyabi"
     }
   ]
 }
