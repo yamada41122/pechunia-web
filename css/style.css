@@ -1174,6 +1174,61 @@ main, header, footer {
 .reveal[data-delay="4"] { transition-delay: 0.32s; }
 .reveal[data-delay="5"] { transition-delay: 0.40s; }
 
+/* ---------- Scroll to top button ---------- */
+.scroll-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(126, 182, 209, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease, background 0.2s ease;
+  z-index: 90;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.scroll-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.scroll-top:hover {
+  background: var(--accent-strong);
+  transform: translateY(-3px);
+}
+
+.scroll-top svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 720px) {
+  .scroll-top {
+    width: 44px;
+    height: 44px;
+    bottom: 16px;
+    right: 16px;
+  }
+  .scroll-top svg { width: 20px; height: 20px; }
+}
+
 /* ---------- Marquee ---------- */
 .marquee {
   border-top: 1px solid var(--line);
@@ -1251,11 +1306,29 @@ main, header, footer {
   .hero-meta { display: none; }
   .footer-grid { grid-template-columns: 1fr; gap: 40px; }
   .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
-  .artists-grid { grid-template-columns: 1fr; }
+
+  /* Artists 3列表示（スマホ用に最適化） */
+  .artists-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .artist-card { border-radius: 8px; }
+  .artist-card .meta { left: 10px; right: 10px; bottom: 10px; }
+  .artist-card .meta .role { font-size: 8px; letter-spacing: 0.16em; }
+  .artist-card .meta .name { font-size: 15px; margin-top: 4px; }
+  .artist-card .meta .members { display: none; }
+  .artist-card .corner { font-size: 8px; top: 8px; right: 8px; letter-spacing: 0.18em; }
+  .artist-card .visual { font-size: clamp(36px, 12vw, 64px); }
+
   .company-table .row { grid-template-columns: 1fr; gap: 4px; }
   .profile-row { grid-template-columns: 1fr; gap: 4px; }
   .news-item { grid-template-columns: 1fr; gap: 6px; padding: 18px 8px; }
   .steps { grid-template-columns: 1fr; }
   .section-head { margin-bottom: 40px; }
   .hero-petals { background-size: 280px; opacity: 0.12; }
+}
+
+/* 極小画面（≤380px）でも3列をキープ */
+@media (max-width: 380px) {
+  .artists-grid { gap: 6px; }
+  .artist-card .meta { left: 8px; right: 8px; bottom: 8px; }
+  .artist-card .meta .name { font-size: 13px; }
+  .artist-card .meta .role { font-size: 7px; }
 }

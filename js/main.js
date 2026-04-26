@@ -115,6 +115,43 @@
     });
   }
 
+  // ---------- Scroll to top button ----------
+  // ボタンを動的に挿入（全ページ共通で1か所で管理するため）
+  const scrollTopBtn = document.createElement('button');
+  scrollTopBtn.className = 'scroll-top';
+  scrollTopBtn.setAttribute('aria-label', 'ページ上部へ');
+  scrollTopBtn.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="6 14 12 8 18 14"/></svg>';
+  document.body.appendChild(scrollTopBtn);
+
+  let lastScrollY = 0;
+  let scrollTopTicking = false;
+  const SHOW_THRESHOLD = 400;
+
+  const updateScrollTopBtn = () => {
+    if (window.scrollY > SHOW_THRESHOLD) {
+      scrollTopBtn.classList.add('is-visible');
+    } else {
+      scrollTopBtn.classList.remove('is-visible');
+    }
+    scrollTopTicking = false;
+  };
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      lastScrollY = window.scrollY;
+      if (!scrollTopTicking) {
+        window.requestAnimationFrame(updateScrollTopBtn);
+        scrollTopTicking = true;
+      }
+    },
+    { passive: true }
+  );
+
+  scrollTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   // ---------- Hero parallax (subtle) ----------
   const heroBg = document.querySelector('.hero-bg');
   const heroGrid = document.querySelector('.hero-grid');
