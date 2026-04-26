@@ -118,5 +118,19 @@
         "tiktok": ""
       }
     ]
+  },
+  {
+    "id": "item-1777192164905",
+    "no": "02",
+    "name": "文翠麗",
+    "category": "group",
+    "role": "Girls Group",
+    "members": "6 Members",
+    "memberList": "HONAMI/MIYABI/AKINA/KOKORO/REINA/YURIA",
+    "colorVariant": "c-1",
+    "initial": "文",
+    "description": "",
+    "image": "img/artists/item-1777192164905.jpg",
+    "memberItems": []
   }
 ]
