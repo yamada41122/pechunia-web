@@ -90,12 +90,27 @@
     if (!container) return;
     try {
       const list = await fetchJSON(opts.dataPath || 'data/artists.json');
-      const limit = opts.limit || list.length;
       const filtered = opts.category
         ? list.filter((a) => a.category === opts.category)
         : list;
-      const items = filtered.slice(0, limit);
-      container.innerHTML = items.map(renderArtistCard).join('');
+
+      let cards = [];
+      if (opts.includeMembers) {
+        // 各アーティストを表示 → group/unitならメンバーも続けて表示
+        for (const a of filtered) {
+          cards.push(renderArtistCard(a));
+          if ((a.category === 'group' || a.category === 'unit') && Array.isArray(a.memberItems)) {
+            for (const m of a.memberItems) {
+              cards.push(renderMemberCard(m, a.id));
+            }
+          }
+        }
+      } else {
+        cards = filtered.map(renderArtistCard);
+      }
+
+      const limit = opts.limit || cards.length;
+      container.innerHTML = cards.slice(0, limit).join('');
     } catch (err) {
       console.error(err);
       container.innerHTML = '<p style="padding:24px; color:var(--text-tertiary);">アーティスト情報の読み込みに失敗しました。</p>';
@@ -422,7 +437,8 @@
 
     document.querySelectorAll('[data-render="artists"]').forEach((el) => {
       const limit = parseInt(el.getAttribute('data-limit'), 10) || undefined;
-      renderArtists(el, { limit });
+      const includeMembers = el.getAttribute('data-include-members') === 'true';
+      renderArtists(el, { limit, includeMembers });
     });
 
     document.querySelectorAll('[data-render="featured"]').forEach((el) => {
