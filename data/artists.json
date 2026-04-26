@@ -12,11 +12,46 @@
     "description": "王道系アイドルグループ！「あなたの日常に、小さな癒しをお届けたい！」 「癒しと幸せな時間の共有を」そんな想いを込めて\nGIVEMELOVE の略語である、ギミラブ！というグループ名として活動中。",
     "image": null,
     "memberItems": [
-      { "id": "kirara", "name": "KIRARA", "nameJa": "", "role": "", "image": null, "initial": "K" },
-      { "id": "rii", "name": "RII", "nameJa": "", "role": "", "image": null, "initial": "R" },
-      { "id": "misuzu", "name": "MISUZU", "nameJa": "", "role": "", "image": null, "initial": "M" },
-      { "id": "non", "name": "NON", "nameJa": "", "role": "", "image": null, "initial": "N" },
-      { "id": "mirai", "name": "MIRAI", "nameJa": "", "role": "", "image": null, "initial": "M" }
+      {
+        "id": "kirara",
+        "name": "KIRARA",
+        "nameJa": "齋藤きらら",
+        "role": "Yellow",
+        "initial": "K",
+        "image": null
+      },
+      {
+        "id": "rii",
+        "name": "RII",
+        "nameJa": "",
+        "role": "",
+        "image": null,
+        "initial": "R"
+      },
+      {
+        "id": "misuzu",
+        "name": "MISUZU",
+        "nameJa": "",
+        "role": "",
+        "image": null,
+        "initial": "M"
+      },
+      {
+        "id": "non",
+        "name": "NON",
+        "nameJa": "",
+        "role": "",
+        "image": null,
+        "initial": "N"
+      },
+      {
+        "id": "mirai",
+        "name": "MIRAI",
+        "nameJa": "",
+        "role": "",
+        "image": null,
+        "initial": "M"
+      }
     ]
   },
   {
@@ -32,10 +67,38 @@
     "description": "クールでモードな世界観の4人組ボーイズグループ。",
     "image": null,
     "memberItems": [
-      { "id": "haru", "name": "HARU", "nameJa": "陽", "role": "Leader / Vocal", "image": null, "initial": "H" },
-      { "id": "kei", "name": "KEI", "nameJa": "圭", "role": "Rap", "image": null, "initial": "K" },
-      { "id": "ren", "name": "REN", "nameJa": "蓮", "role": "Dance", "image": null, "initial": "R" },
-      { "id": "yuto", "name": "YUTO", "nameJa": "悠斗", "role": "Vocal", "image": null, "initial": "Y" }
+      {
+        "id": "haru",
+        "name": "HARU",
+        "nameJa": "陽",
+        "role": "Leader / Vocal",
+        "image": null,
+        "initial": "H"
+      },
+      {
+        "id": "kei",
+        "name": "KEI",
+        "nameJa": "圭",
+        "role": "Rap",
+        "image": null,
+        "initial": "K"
+      },
+      {
+        "id": "ren",
+        "name": "REN",
+        "nameJa": "蓮",
+        "role": "Dance",
+        "image": null,
+        "initial": "R"
+      },
+      {
+        "id": "yuto",
+        "name": "YUTO",
+        "nameJa": "悠斗",
+        "role": "Vocal",
+        "image": null,
+        "initial": "Y"
+      }
     ]
   }
 ]
