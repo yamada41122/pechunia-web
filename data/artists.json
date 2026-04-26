@@ -194,6 +194,48 @@
         "twitter": "https://x.com/akn_k23",
         "youtube": "",
         "tiktok": ""
+      },
+      {
+        "id": "aoi-kokoro",
+        "name": "AOI KOKORO",
+        "nameJa": "葵 こころ",
+        "furigana": "あおい こころ",
+        "role": "ラベンダーイエロー",
+        "birthday": "",
+        "birthplace": "新潟県",
+        "bloodType": "",
+        "height": "",
+        "hobbies": "歌うこと",
+        "specialties": "心地よい歌を届けること",
+        "catchphrase": "",
+        "description": "",
+        "initial": "K",
+        "image": "img/artists/item-1777192164905-aoi-kokoro.png",
+        "instagram": "",
+        "twitter": "https://x.com/cocoro_0602_",
+        "youtube": "",
+        "tiktok": ""
+      },
+      {
+        "id": "noda-reina",
+        "name": "NODA REINA",
+        "nameJa": "野田 伶奈",
+        "furigana": "のだ れいな",
+        "role": "ラベンダーレッド",
+        "birthday": "",
+        "birthplace": "宮城県",
+        "bloodType": "",
+        "height": "",
+        "hobbies": "アニメ",
+        "specialties": "",
+        "catchphrase": "",
+        "description": "",
+        "initial": "R",
+        "image": "img/artists/item-1777192164905-noda-reina.jpg",
+        "instagram": "",
+        "twitter": "https://x.com/reinaaa1002",
+        "youtube": "",
+        "tiktok": ""
       }
     ]
   }
