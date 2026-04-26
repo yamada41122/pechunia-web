@@ -102,6 +102,50 @@
     }
   };
 
+  // ---------- Featured (top page mix of artists + members) ----------
+  const renderFeatured = async (container, opts = {}) => {
+    if (!container) return;
+    try {
+      // 並列で取得
+      const [artists, featured] = await Promise.all([
+        fetchJSON(opts.artistsPath || 'data/artists.json'),
+        fetchJSON(opts.featuredPath || 'data/featured.json').catch(() => ({ items: [] })),
+      ]);
+
+      const items = (featured.items || []).slice(0, 6);
+
+      // フォールバック：featured が空ならアーティスト先頭6件を表示
+      if (!items.length) {
+        const cards = artists.slice(0, 6).map(renderArtistCard).join('');
+        container.innerHTML = cards;
+        return;
+      }
+
+      // 各 featured アイテムを実体に解決
+      const cards = items
+        .map((it) => {
+          if (it.type === 'artist') {
+            const a = artists.find((x) => x.id === it.id);
+            return a ? renderArtistCard(a) : '';
+          }
+          if (it.type === 'member') {
+            const a = artists.find((x) => x.id === it.artistId);
+            if (!a) return '';
+            const m = (a.memberItems || []).find((x) => x.id === it.memberId);
+            return m ? renderMemberCard(m, a.id) : '';
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .join('');
+
+      container.innerHTML = cards;
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<p style="padding:24px; color:var(--text-tertiary);">表示項目の読み込みに失敗しました。</p>';
+    }
+  };
+
   // ---------- Artist detail ----------
   const renderArtistDetail = async (opts = {}) => {
     try {
@@ -381,6 +425,10 @@
       renderArtists(el, { limit });
     });
 
+    document.querySelectorAll('[data-render="featured"]').forEach((el) => {
+      renderFeatured(el);
+    });
+
     if (document.querySelector('[data-render="audition"]')) {
       renderAudition();
     }
@@ -395,7 +443,7 @@
   };
 
   // 公開メソッド
-  window.PechuniaRender = { renderNews, renderArtists, renderAudition, renderArtistDetail, renderMemberDetail };
+  window.PechuniaRender = { renderNews, renderArtists, renderFeatured, renderAudition, renderArtistDetail, renderMemberDetail };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

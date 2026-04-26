@@ -49,7 +49,10 @@
     news: { list: [], sha: null, dirty: false },
     artists: { list: [], sha: null, dirty: false },
     audition: { obj: null, sha: null, dirty: false },
+    featured: { items: [], sha: null, dirty: false },
   };
+
+  const FEATURED_MAX = 6;
 
   // 保存待ちの画像 Blob: key="artist:luminas" or "member:luminas:aoi" → { blob, ext, path }
   const pendingImages = new Map();
@@ -174,9 +177,18 @@
       data.artists = { list: artistsRes.data, sha: artistsRes.sha, dirty: false };
       data.audition = { obj: auditionRes.data, sha: auditionRes.sha, dirty: false };
 
+      // featured.json は無い場合があるので個別に取得
+      try {
+        const featuredRes = await GH.getJSON('data/featured.json');
+        data.featured = { items: featuredRes.data.items || [], sha: featuredRes.sha, dirty: false };
+      } catch (e) {
+        data.featured = { items: [], sha: null, dirty: false };
+      }
+
       renderNews();
       renderArtists();
       renderAudition();
+      renderFeatured();
       hideLoading();
     } catch (err) {
       hideLoading();
@@ -187,7 +199,7 @@
 
   // ---------- Logout ----------
   $('#logoutBtn').addEventListener('click', () => {
-    if ((data.news.dirty || data.artists.dirty || data.audition.dirty) &&
+    if ((data.news.dirty || data.artists.dirty || data.audition.dirty || data.featured.dirty) &&
         !confirm('保存されていない変更があります。本当にログアウトしますか？')) return;
     GH.clearAuth();
     location.reload();
@@ -1153,6 +1165,215 @@
   };
 
   // ============================================================
+  // Featured (Top Page)
+  // ============================================================
+  const featuredEditor = $('#featuredEditor');
+
+  // featured アイテム → 表示用情報を取得
+  const resolveFeaturedItem = (it) => {
+    if (it.type === 'artist') {
+      const a = data.artists.list.find((x) => x.id === it.id);
+      if (!a) return null;
+      return {
+        type: 'artist',
+        label: a.name,
+        sub: `Artist ・ ${a.role || a.category || ''}`,
+        image: a.image,
+        initial: a.initial,
+        colorVariant: a.colorVariant,
+      };
+    }
+    if (it.type === 'member') {
+      const a = data.artists.list.find((x) => x.id === it.artistId);
+      if (!a) return null;
+      const m = (a.memberItems || []).find((x) => x.id === it.memberId);
+      if (!m) return null;
+      return {
+        type: 'member',
+        label: m.name,
+        sub: `Member ・ ${a.name}${m.role ? ' / ' + m.role : ''}`,
+        image: m.image,
+        initial: m.initial,
+        colorVariant: a.colorVariant,
+      };
+    }
+    return null;
+  };
+
+  const renderFeatured = () => {
+    const items = data.featured.items;
+    if (!items.length) {
+      featuredEditor.innerHTML = `<div class="row-empty">表示項目が未設定です。「+ 項目を追加」から登録してください。<br><small style="color:var(--text-tertiary);">未設定の場合、トップページにはアーティスト先頭6件が表示されます。</small></div>`;
+      return;
+    }
+    featuredEditor.innerHTML = items.map((it, idx) => {
+      const info = resolveFeaturedItem(it);
+      if (!info) {
+        return `
+          <div class="row-card" data-idx="${idx}" style="opacity:0.6;">
+            <div class="row-handle">⋮⋮</div>
+            <div class="artist-thumb" style="background:var(--bg-secondary);">?</div>
+            <div>
+              <div class="artist-name">（削除済み）</div>
+              <div class="artist-sub">${escapeHtml(JSON.stringify(it))}</div>
+            </div>
+            <div></div>
+            <div class="row-actions">
+              <button class="btn-danger" data-fact="delete">削除</button>
+            </div>
+          </div>
+        `;
+      }
+      const thumbStyle = info.image ? `background-image:url('../${escapeHtml(info.image)}');background-size:cover;background-position:center;color:transparent;` : '';
+      const tagColor = info.type === 'artist' ? 'is-media' : 'is-info';
+      return `
+        <div class="row-card" data-idx="${idx}">
+          <div class="row-handle">⋮⋮</div>
+          <div class="artist-thumb ${escapeHtml(info.colorVariant || 'c-1')}" style="${thumbStyle}">${escapeHtml(info.initial || '')}</div>
+          <div>
+            <div class="artist-name">${escapeHtml(info.label)}</div>
+            <div class="artist-sub">${escapeHtml(info.sub)}</div>
+          </div>
+          <div><span class="row-tag ${tagColor}">${info.type === 'artist' ? 'Artist' : 'Member'}</span></div>
+          <div class="row-actions">
+            <button data-fact="up">↑</button>
+            <button data-fact="down">↓</button>
+            <button class="btn-danger" data-fact="delete">削除</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  featuredEditor.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-fact]');
+    if (!btn) return;
+    const card = btn.closest('.row-card');
+    const idx = parseInt(card.dataset.idx, 10);
+    const act = btn.dataset.fact;
+    const items = data.featured.items;
+
+    if (act === 'delete') {
+      if (!confirm('この項目をTop Pageから外します。よろしいですか？')) return;
+      items.splice(idx, 1);
+      data.featured.dirty = true;
+      renderFeatured();
+    } else if (act === 'up' && idx > 0) {
+      [items[idx - 1], items[idx]] = [items[idx], items[idx - 1]];
+      data.featured.dirty = true;
+      renderFeatured();
+    } else if (act === 'down' && idx < items.length - 1) {
+      [items[idx + 1], items[idx]] = [items[idx], items[idx + 1]];
+      data.featured.dirty = true;
+      renderFeatured();
+    }
+  });
+
+  $('[data-action="add-featured"]').addEventListener('click', () => {
+    if (data.featured.items.length >= FEATURED_MAX) {
+      toast(`Top Page 表示は最大${FEATURED_MAX}件までです`, 'error');
+      return;
+    }
+    openFeaturedPicker();
+  });
+
+  $('[data-action="save-featured"]').addEventListener('click', () => saveFeatured());
+
+  const openFeaturedPicker = () => {
+    // 既に追加済みの項目を除外
+    const existing = new Set(
+      data.featured.items.map((it) =>
+        it.type === 'artist' ? `a:${it.id}` : `m:${it.artistId}:${it.memberId}`
+      )
+    );
+
+    // 候補リストを生成
+    const groupSections = data.artists.list.map((a) => {
+      const isAdded = (key) => existing.has(key);
+      const aKey = `a:${a.id}`;
+      const aRow = `
+        <div class="picker-row ${isAdded(aKey) ? 'is-added' : ''}" data-pick='${escapeHtml(JSON.stringify({ type: 'artist', id: a.id }))}' data-key="${aKey}">
+          <div class="artist-thumb ${escapeHtml(a.colorVariant || 'c-1')}" style="${a.image ? `background-image:url('../${escapeHtml(a.image)}');background-size:cover;background-position:center;color:transparent;` : ''}">${escapeHtml(a.initial || '')}</div>
+          <div>
+            <div class="artist-name">${escapeHtml(a.name)}</div>
+            <div class="artist-sub">Artist ・ ${escapeHtml(a.role || a.category || '')}</div>
+          </div>
+          <div>${isAdded(aKey) ? '<span class="row-tag is-info">追加済み</span>' : '<button class="btn-ghost" data-act="pick">追加</button>'}</div>
+        </div>
+      `;
+      const memberRows = (a.memberItems || []).map((m) => {
+        const mKey = `m:${a.id}:${m.id}`;
+        return `
+          <div class="picker-row ${isAdded(mKey) ? 'is-added' : ''}" data-pick='${escapeHtml(JSON.stringify({ type: 'member', artistId: a.id, memberId: m.id }))}' data-key="${mKey}" style="padding-left:32px;">
+            <div class="artist-thumb ${escapeHtml(a.colorVariant || 'c-1')}" style="${m.image ? `background-image:url('../${escapeHtml(m.image)}');background-size:cover;background-position:center;color:transparent;` : ''}">${escapeHtml(m.initial || '')}</div>
+            <div>
+              <div class="artist-name">${escapeHtml(m.name)}${m.nameJa ? ` <span style="color:var(--text-tertiary); font-weight:400; font-size:12px;">/ ${escapeHtml(m.nameJa)}</span>` : ''}</div>
+              <div class="artist-sub">Member ・ ${escapeHtml(a.name)}${m.role ? ' / ' + escapeHtml(m.role) : ''}</div>
+            </div>
+            <div>${isAdded(mKey) ? '<span class="row-tag is-info">追加済み</span>' : '<button class="btn-ghost" data-act="pick">追加</button>'}</div>
+          </div>
+        `;
+      }).join('');
+      return aRow + memberRows;
+    }).join('');
+
+    openModal({
+      title: 'Top Pageに追加する項目を選択',
+      body: `
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
+          残り <strong>${FEATURED_MAX - data.featured.items.length}</strong> 件追加可能。クリックすると即座に追加されます。
+        </p>
+        <div class="picker-list">${groupSections || '<div class="row-empty">アーティストが登録されていません。</div>'}</div>
+      `,
+      onOpen: () => {
+        const list = modalBody.querySelector('.picker-list');
+        if (!list) return;
+        list.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-act="pick"]');
+          if (!btn) return;
+          const row = btn.closest('.picker-row');
+          if (!row) return;
+          if (data.featured.items.length >= FEATURED_MAX) {
+            toast(`最大${FEATURED_MAX}件までです`, 'error');
+            return;
+          }
+          try {
+            const item = JSON.parse(row.dataset.pick);
+            data.featured.items.push(item);
+            data.featured.dirty = true;
+            row.classList.add('is-added');
+            row.querySelector('div:last-child').innerHTML = '<span class="row-tag is-info">追加済み</span>';
+            renderFeatured();
+            // 残り数表示を更新
+            const remainEl = modalBody.querySelector('p strong');
+            if (remainEl) remainEl.textContent = String(FEATURED_MAX - data.featured.items.length);
+          } catch (err) {
+            console.error(err);
+          }
+        });
+      },
+      onSave: () => true, // ピッカーは即時反映なので「適用」は閉じるだけ
+    });
+  };
+
+  const saveFeatured = async () => {
+    if (!data.featured.dirty) { toast('変更はありません'); return; }
+    showLoading('変更を保存中...');
+    try {
+      const payload = { items: data.featured.items };
+      const result = await GH.updateJSON('data/featured.json', payload, '[admin] update featured', data.featured.sha);
+      data.featured.sha = result.content.sha;
+      data.featured.dirty = false;
+      hideLoading();
+      toast('保存しました。サイトへの反映まで1〜2分お待ちください。', 'success');
+    } catch (err) {
+      hideLoading();
+      console.error(err);
+      toast(`保存失敗：${err.message}`, 'error');
+    }
+  };
+
+  // ============================================================
   // Modal
   // ============================================================
   const modal = $('#modal');
@@ -1205,7 +1426,7 @@
 
   // ---------- 離脱時の警告 ----------
   window.addEventListener('beforeunload', (e) => {
-    if (data.news.dirty || data.artists.dirty || data.audition.dirty) {
+    if (data.news.dirty || data.artists.dirty || data.audition.dirty || data.featured.dirty) {
       e.preventDefault();
       e.returnValue = '';
     }

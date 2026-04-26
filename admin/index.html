@@ -85,6 +85,7 @@
     <button class="tab-btn is-active" data-tab="news">News</button>
     <button class="tab-btn" data-tab="artists">Artists</button>
     <button class="tab-btn" data-tab="audition">Audition</button>
+    <button class="tab-btn" data-tab="featured">Top Page</button>
   </nav>
 
   <main class="admin-main">
@@ -119,6 +120,21 @@
         </div>
       </div>
       <div class="artists-editor" id="artistsEditor"></div>
+    </section>
+
+    <!-- Featured (Top Page) Panel -->
+    <section class="panel hidden" data-panel="featured">
+      <div class="panel-head">
+        <div>
+          <h2>Top Page 表示項目</h2>
+          <p class="panel-desc">トップページの「Our Roster」エリアに表示するアーティスト・メンバーを選択（最大6件）。並び順そのままで表示されます。</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-ghost" data-action="add-featured">+ 項目を追加</button>
+          <button class="btn-primary" data-action="save-featured">変更を保存</button>
+        </div>
+      </div>
+      <div class="featured-editor" id="featuredEditor"></div>
     </section>
 
     <!-- Audition Panel -->
