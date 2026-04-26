@@ -7,7 +7,7 @@
   "ctaLabel": "Entry Now →",
   "ctaLink": "contact.html",
   "requirements": [
-    "13歳〜25歳の男女（性別不問・国籍不問）",
+    "15歳〜30歳の男女（性別不問・国籍不問）",
     "歌・ダンス・演技などの表現に情熱を持つ方",
     "事務所の方針に共感し、長期的に活動可能な方",
     "未経験者・経験者ともに歓迎"
@@ -42,8 +42,8 @@
   "schedule": [
     { "label": "Entry", "value": "2026年3月22日（日）〜 6月30日（火）" },
     { "label": "Web Screening", "value": "2026年7月上旬 〜 7月下旬" },
-    { "label": "Studio Audition", "value": "2026年8月（東京・大阪・福岡）" },
-    { "label": "Final", "value": "2026年9月中旬" },
-    { "label": "Result", "value": "2026年9月下旬 個別連絡" }
+    { "label": "Studio Audition", "value": "2026年7月" },
+    { "label": "Final", "value": "2026年8月上旬" },
+    { "label": "Result", "value": "2026年8月下旬" }
   ]
 }
