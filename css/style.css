@@ -747,8 +747,9 @@ main, header, footer {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr;
-  gap: 48px;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 64px;
+  align-items: start;
 }
 
 .footer-brand .logo {
@@ -1215,7 +1216,8 @@ main, header, footer {
   .artists-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
   .about,
   .artist-detail { grid-template-columns: 1fr; gap: 48px; }
-  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+  .footer-brand { grid-column: 1 / -1; }
   .steps { grid-template-columns: repeat(2, 1fr); }
   .news-item {
     grid-template-columns: 100px 90px 1fr;
