@@ -11,13 +11,17 @@
     "initial": "G",
     "description": "王道系アイドルグループ！「あなたの日常に、小さな癒しをお届けたい！」 「癒しと幸せな時間の共有を」そんな想いを込めて\nGIVEMELOVE の略語である、ギミラブ！というグループ名として活動中。",
     "image": "img/artists/luminas.jpg",
+    "instagram": "",
+    "twitter": "",
+    "youtube": "",
+    "tiktok": "",
     "memberItems": [
       {
         "id": "kirara",
         "name": "SAITO KIRARA",
         "nameJa": "齋藤きらら",
         "furigana": "さいとう きらら",
-        "role": "Yellow",
+        "role": "Yellow Heart",
         "birthday": "４月１８日",
         "birthplace": "宮城県",
         "bloodType": "B",
