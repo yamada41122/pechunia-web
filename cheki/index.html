@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F0D16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="チェキタイマー">
+<meta name="robots" content="noindex, nofollow">
+<title>アイドルチェキタイマー</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: slim header + equal-cell grid that fills one phone screen; each cell is a member-colour meter that drains right→left */
+  --bg:#0F0D16;
+  --surface:#1B1826;
+  --surface-2:#272336;
+  --line:#3A3550;
+  --text:#F4F1FB;
+  --muted:#A09AB8;
+  --accent:#FF5C9E;
+  --danger:#FF4D5E;
+  --k-c:#FF5C9E; /* チェキ */
+  --k-p:#5CD2F2; /* 写メ */
+  --k-v:#FFB547; /* 動画 */
+  --k-f:#7FE8D0; /* 初回 */
+  --f-body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-num:"Barlow Condensed","DIN Condensed","Arial Narrow",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--f-body);-webkit-text-size-adjust:100%;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{height:100%;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.bar{flex:none;display:flex;align-items:center;gap:8px;padding:8px 10px}
+.tb{height:42px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center}
+.grp-btn{flex:1 1 auto;min-width:0;gap:8px;padding:0 12px;font-weight:700;font-size:15px}
+.grp-btn .gn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grp-btn .dots{display:flex;gap:2px;flex:none}
+.grp-btn .dots i{width:6px;height:6px;border-radius:50%;display:block}
+.grp-btn .caret{margin-left:auto;color:var(--muted);font-size:10px;flex:none}
+.total-btn{flex:none;padding:0 12px;gap:5px;align-items:baseline;padding-top:9px}
+.total-btn .lb{font-size:11px;color:var(--muted);font-weight:700}
+.total-btn .v{font-family:var(--f-num);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums;line-height:1}
+.total-btn .u{font-size:11px;color:var(--muted);font-weight:700}
+.icon-btn{flex:none;width:42px;justify-content:center}
+.icon-btn svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.grid{flex:1 1 auto;min-height:0;display:grid;gap:8px;padding:0 10px 10px;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));grid-template-rows:repeat(var(--rows,4),minmax(0,1fr))}
+
+/* member card */
+.card{position:relative;border-radius:16px;overflow:hidden;container-type:size;background:color-mix(in srgb,var(--mc) 13%,var(--surface));border:1.5px solid color-mix(in srgb,var(--mc) 50%,var(--line));cursor:pointer;outline-offset:-2px}
+.layer{position:absolute;inset:0;pointer-events:none}
+.base{color:var(--text)}
+.fill{background:var(--mc);color:var(--ink);clip-path:inset(0 calc((1 - var(--p,1)) * 100%) 0 0)}
+.nm{position:absolute;left:11px;top:9px;right:62px;font-weight:900;font-size:clamp(13px,12cqh,22px);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kd{position:absolute;left:11px;right:8px;top:calc(10px + clamp(16px,14.5cqh,27px));font-size:clamp(10px,8.5cqh,13px);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.92}
+.sec{position:absolute;left:0;right:0;top:51%;transform:translateY(-50%);text-align:center;font-family:var(--f-num);font-weight:700;font-size:min(46cqh,40cqw);line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sec small{font-family:var(--f-body);font-size:.27em;font-weight:900;margin-left:.06em}
+.sec.word{font-size:min(28cqh,22cqw);letter-spacing:.04em}
+.st{position:absolute;left:11px;bottom:15px;font-size:clamp(10px,8.5cqh,13px);font-weight:700;opacity:.8;white-space:nowrap}
+.ruler{position:absolute;left:0;right:0;bottom:0;height:10px;background-image:repeating-linear-gradient(to right,var(--tk) 0 2px,transparent 2px var(--tb,16.6667%)),repeating-linear-gradient(to right,var(--tk) 0 1px,transparent 1px var(--ts,3.3333%));background-size:100% 10px,100% 5px;background-position:0 100%,0 100%;background-repeat:no-repeat}
+.base .ruler{--tk:color-mix(in srgb,var(--text) 32%,transparent)}
+.fill .ruler{--tk:color-mix(in srgb,var(--ink) 38%,transparent)}
+
+.pill{height:clamp(26px,21cqh,36px);padding:0 11px;border-radius:999px;background:rgba(12,9,20,.58);color:#fff;font-weight:700;font-size:clamp(11px,9cqh,14px);display:inline-flex;align-items:center;gap:2px;white-space:nowrap;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.tr{position:absolute;right:7px;top:6px;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.cnt,.wb{height:clamp(24px,19cqh,32px);padding:0 9px}
+.wb{background:var(--danger);color:#fff;gap:3px}
+.wb[hidden]{display:none}
+.wb b{font-family:var(--f-num);font-size:1.45em;line-height:1}
+.has-warn .kd{right:62px}
+.cnt b{font-family:var(--f-num);font-size:1.45em;font-variant-numeric:tabular-nums;line-height:1}
+.cnt span{font-size:.85em;opacity:.85}
+.ctrl{position:absolute;right:7px;bottom:15px;display:none;gap:6px}
+.s-run .c-run,.s-pause .c-run,.s-done .c-done,.s-called .c-called{display:flex}
+.pill.call{background:#fff;color:#17131F;font-weight:900;letter-spacing:.06em;padding:0 16px}
+.pill.cont{background:var(--danger);color:#fff}
+.s-called .st{display:none}
+/* CALL後の「終了」「CALL◯回目」はカード下半分いっぱいの大ボタン */
+.c-called,.c-done{left:7px;right:7px;bottom:14px;height:44cqh;gap:7px}
+.c-called .pill,.c-done .pill{flex:1 1 0;min-width:0;height:100%;padding:0 4px;justify-content:center;border-radius:14px;font-size:clamp(15px,min(15cqh,11.5cqw),28px);font-weight:900;letter-spacing:.02em;background:rgba(12,9,20,.78);border:2px solid rgba(255,255,255,.85)}
+.c-called .pill.cont{background:var(--k-v);color:#1d1203;border-color:#fff;flex-direction:column;gap:0;line-height:1.05}
+.c-called .pill.cont small{font-size:.62em;font-weight:900}
+.c-called .pill.cont.last{background:var(--danger);color:#fff}
+.c-done .pill.call{background:#fff;color:#17131F;border-color:#fff;font-size:clamp(20px,min(22cqh,16cqw),40px);letter-spacing:.14em;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.s-done .sec{top:39%;font-size:min(24cqh,20cqw)}
+.s-done .st{display:none}
+.crow.orow{grid-template-columns:minmax(0,1fr) auto 92px}
+.crow.orow .n{font-size:22px;white-space:nowrap}
+.crow.orow .n small{font-family:var(--f-body);font-size:11px;color:var(--muted);margin-left:4px}
+.crow.orow button{font-size:13px}
+.stbl .ocol .v{font-size:18px}
+.stbl .ocol .v.zero{color:var(--line)}
+.s-called .sec{top:39%;font-size:min(26cqh,24cqw)}
+.s-called{border-color:var(--text);box-shadow:inset 0 0 0 3px var(--text)}
+.s-run .st{display:none}
+.s-idle{background:color-mix(in srgb,var(--mc) 30%,var(--surface))}
+.s-idle .fill{visibility:hidden}
+.s-run .sec,.s-pause .sec{top:49%;font-size:min(36cqh,34cqw)}
+.s-pause .sec{animation:blink 1.1s ease-in-out infinite}
+.s-pause .fill{background-image:repeating-linear-gradient(135deg,transparent 0 10px,rgba(0,0,0,.10) 10px 20px)}
+.warn{border-color:var(--danger);animation:pulse .5s ease-in-out infinite alternate}
+.s-done{border-color:var(--mc)}
+.s-done .fill{animation:flash .55s steps(1) infinite}
+@keyframes blink{50%{opacity:.35}}
+@keyframes pulse{from{box-shadow:inset 0 0 0 0 var(--danger)}to{box-shadow:inset 0 0 0 4px var(--danger)}}
+@keyframes flash{0%{opacity:1}50%{opacity:.08}}
+@media (prefers-reduced-motion:reduce){
+  .s-pause .sec,.warn,.s-done .fill{animation:none}
+  .warn{box-shadow:inset 0 0 0 4px var(--danger)}
+  .s-done{box-shadow:inset 0 0 0 5px var(--text)}
+}
+
+/* sheets & dialogs */
+.ov{position:fixed;inset:0;z-index:20;background:rgba(5,4,10,.62);display:none;align-items:flex-end;justify-content:center}
+.ov.open{display:flex}
+.ov.center{align-items:center;padding:16px}
+.sheet{width:100%;max-width:560px;max-height:90%;overflow:auto;-webkit-overflow-scrolling:touch;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px}
+.ov.center .sheet{max-width:360px;border-radius:20px;border-bottom:1px solid var(--line);padding-bottom:18px}
+.sh-h{display:flex;align-items:center;gap:10px}
+.sh-h h2{font-size:18px;font-weight:900;flex:1;text-wrap:balance}
+.x{width:36px;height:36px;flex:none;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:18px;color:var(--muted)}
+.sec-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.stack{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px}
+.btn{height:46px;padding:0 16px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#22061a}
+.btn.danger{color:var(--danger)}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.4;cursor:default}
+.inp{height:46px;width:100%;min-width:0;padding:0 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-size:16px}
+.inp:focus{border-color:var(--accent);outline:none}
+textarea.inp{height:96px;padding:10px 12px;font-size:13px;font-family:ui-monospace,Menlo,monospace;resize:vertical;-webkit-user-select:text;user-select:text}
+.note{font-size:12px;color:var(--muted);line-height:1.6}
+.kdot{width:10px;height:10px;border-radius:50%;background:var(--kc);display:inline-block;flex:none}
+/* icons */
+.ic{width:1.25em;height:1.25em;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.25em}
+.ic .ic-fill{fill:currentColor;fill-opacity:.28}
+.ic-k{color:var(--kc,currentColor)}
+.it{display:inline-flex;align-items:center;gap:.15em;white-space:nowrap}
+.it .ic-s{margin-right:.2em;opacity:.9}
+.plus{margin:0 .25em;opacity:.7}
+.card .kd{display:flex;align-items:center}
+.card .kd .ic{width:1.45em;height:1.45em}
+.card .kd .ic-k{color:inherit}
+.legend{display:inline-flex;align-items:center;gap:.2em;color:var(--text)}
+
+.glist{display:flex;flex-direction:column;gap:8px}
+.gitem{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 12px;border-radius:14px;background:var(--surface-2);border:1.5px solid var(--line)}
+.gitem.on{border-color:var(--accent)}
+.gitem .pick{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;gap:5px}
+.gitem .t{font-weight:900;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gitem .m{font-size:12px;color:var(--muted);line-height:1.5}
+.gitem .dots{display:flex;gap:3px}
+.gitem .dots i{width:10px;height:10px;border-radius:50%;display:block;border:1px solid rgba(255,255,255,.15)}
+.gitem .ed{height:36px;padding:0 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:700}
+.badge{font-size:10px;font-weight:700;color:#22061a;background:var(--accent);border-radius:6px;padding:2px 6px;align-self:flex-start}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{height:38px;min-width:52px;padding:0 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-weight:700;font-family:var(--f-num);font-size:18px;font-variant-numeric:tabular-nums}
+.chip small{font-family:var(--f-body);font-size:11px;margin-left:1px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#22061a}
+
+/* menu editor */
+.mtbl{display:flex;flex-direction:column;gap:6px}
+.mitem{display:grid;grid-template-columns:52px minmax(0,1fr) 84px 18px;gap:8px;align-items:center;padding:6px 10px 6px 8px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.mitem.off{opacity:.5}
+.mitem .lb{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden}
+.mitem .lb .ic,.crow .lb .ic{width:20px;height:20px}
+.mitem .lb .ic-s,.crow .lb .ic-s{color:var(--muted);margin-left:2px}
+.mitem .lb{gap:4px}
+.crow .lb{gap:4px}
+.mitem .lb small{color:var(--muted);font-weight:700;font-size:12px}
+.mitem .inp{height:38px;text-align:center;font-family:var(--f-num);font-size:20px;padding:0 6px;background:var(--surface)}
+.mitem .u{font-size:12px;color:var(--muted)}
+
+.mblock{display:flex;flex-direction:column;gap:6px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.mblock:last-child{border-bottom:0;padding-bottom:0}
+.snd{display:grid;grid-template-columns:44px minmax(0,1fr) 80px;gap:6px;align-items:center}
+.snd .sl{display:flex;flex-direction:column;align-items:center;font-size:10px;font-weight:700;color:var(--muted);gap:1px}
+.snd .sl .ic{width:18px;height:18px}
+.snd select.inp{height:40px;font-size:15px;background-position:calc(100% - 18px) 17px,calc(100% - 13px) 17px}
+.snd .play{height:40px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-size:13px;font-weight:700}
+.mrow{display:grid;grid-template-columns:44px minmax(0,1fr) 34px 34px 34px;gap:6px;align-items:center}
+.swatch{width:44px;height:44px;border-radius:12px;border:2px solid rgba(255,255,255,.18);background:var(--c)}
+.mini{width:34px;height:34px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);font-size:14px;display:grid;place-items:center}
+.mini:disabled{opacity:.3}
+.mnum{font-family:var(--f-num);font-size:12px;color:var(--muted)}
+
+.palette{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pal{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:12px;border:1.5px solid transparent;font-size:11px;font-weight:700;color:var(--muted)}
+.pal i{width:38px;height:38px;border-radius:50%;background:var(--c);display:block;border:1px solid rgba(255,255,255,.18)}
+.pal.on{border-color:var(--accent);color:var(--text)}
+.custom-color{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);font-weight:700;font-size:14px}
+.custom-color input{width:44px;height:36px;border:0;background:none;padding:0}
+
+/* type picker */
+.mc-dot{width:14px;height:14px;border-radius:50%;background:var(--mc);flex:none;border:1px solid rgba(255,255,255,.2)}
+.pgrid{display:grid;grid-template-columns:64px 1fr 1fr;gap:8px;align-items:stretch}
+.pgrid .ch{font-size:12px;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:4px;align-self:end}
+.pgrid .ch .ic{width:20px;height:20px;color:var(--text)}
+.pgrid .rh{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:900;font-size:13px}
+.pgrid .rh .ic{width:26px;height:26px}
+.pk{min-height:80px;border-radius:14px;background:var(--surface-2);border:1.5px solid color-mix(in srgb,var(--kc) 55%,var(--line));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative}
+.pk b{font-size:15px;font-weight:900}
+.pk-ic{display:flex;align-items:center;gap:4px;font-size:22px;margin-bottom:1px}
+.pk-ctl{display:flex;flex-direction:column;gap:8px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;background:var(--surface-2);border-radius:13px;border:1px solid var(--line)}
+.seg[hidden],.slots[hidden]{display:none}
+.seg button{height:42px;border-radius:9px;font-weight:900;font-size:15px;color:var(--muted)}
+.seg button b{font-family:var(--f-num);font-size:22px;margin-right:1px}
+.seg button.on{background:var(--accent);color:#22061a}
+.slots{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));gap:6px}
+.slot{height:50px;border-radius:12px;border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;gap:3px;font-size:12px;white-space:nowrap;font-weight:700;color:var(--muted);padding:0 6px;overflow:hidden}
+.slot .no{font-family:var(--f-num);font-size:12px;color:var(--muted);margin-right:2px}
+.slot.cur{border-color:var(--accent);color:var(--text)}
+.slot.filled{border-style:solid;border-color:var(--kc);color:var(--text);background:color-mix(in srgb,var(--kc) 18%,var(--surface-2))}
+.slot.filled::after{content:"×";margin-left:4px;color:var(--muted)}
+.full [data-act=plus]{display:none}
+.pk-ic .ic-s{color:var(--text)}
+.pk .pk-sec{font-family:var(--f-num);font-size:17px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pk .pk-sec small{font-family:var(--f-body);font-size:11px}
+.pk.last{background:color-mix(in srgb,var(--kc) 24%,var(--surface-2))}
+.pk.last::after{content:"前回";position:absolute;top:5px;right:7px;font-size:10px;font-weight:700;color:var(--kc)}
+.pk-empty{min-height:80px;border-radius:14px;border:1px dashed var(--line)}
+
+/* count editor */
+.ctotal{display:flex;align-items:baseline;justify-content:center;gap:6px;font-weight:700}
+.ctotal b{font-family:var(--f-num);font-size:54px;line-height:1;font-variant-numeric:tabular-nums}
+.ctotal span{color:var(--muted);font-size:13px}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) 48px 52px 48px;gap:8px;align-items:center;padding:6px 6px 6px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.crow .lb{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;white-space:nowrap}
+.crow .lb small{color:var(--muted);font-size:12px}
+.crow .n{text-align:center;font-family:var(--f-num);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums}
+.crow.wrow{border-color:color-mix(in srgb,var(--danger) 60%,var(--line))}
+.crow.wrow .lb{color:var(--danger)}
+.crow button{height:42px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:20px;font-weight:700}
+
+/* summary */
+.tbl-wrap{overflow-x:auto;margin:0 -4px}
+.stbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.stbl th{font-size:11px;font-weight:700;color:var(--muted);padding:0 4px 6px;text-align:right;white-space:nowrap}
+.stbl th:first-child{text-align:left}
+.stbl .th-k{display:inline-flex;flex-direction:column;align-items:flex-end;gap:2px}
+.stbl .th-k .ic{width:18px;height:18px}
+.stbl .br .ic{width:1.15em;height:1.15em;vertical-align:-.3em;margin-right:1px}
+.stbl td{padding:7px 4px;border-top:1px solid var(--line);text-align:right;vertical-align:top}
+.stbl td:first-child{text-align:left}
+.stbl .mn{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px;white-space:nowrap;max-width:9em;overflow:hidden;text-overflow:ellipsis}
+.stbl .mn i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.stbl .v{font-family:var(--f-num);font-size:21px;font-weight:700;line-height:1}
+.stbl .v.zero{color:var(--line)}
+.stbl .br{display:block;font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap}
+.stbl .tot .v{color:var(--accent)}
+.stbl .wcol .v{color:var(--danger)}
+.stbl .wcol .v.zero{color:var(--line)}
+.stbl tfoot td{border-top:2px solid var(--line);font-weight:900}
+select.inp{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 20px,calc(100% - 13px) 20px;background-size:5px 5px;background-repeat:no-repeat}
+
+.tg{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.tg .tx{flex:1;display:flex;flex-direction:column;gap:2px;font-weight:700;font-size:15px}
+.tg .tx small{font-weight:500;font-size:12px;color:var(--muted)}
+.sw{position:relative;width:52px;height:30px;flex:none}
+.sw input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.sw span{position:absolute;inset:0;border-radius:15px;background:var(--line);transition:background .15s}
+.sw span::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw input:checked+span{background:var(--accent)}
+.sw input:checked+span::after{transform:translateX(22px)}
+.sw input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.howto{display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.6;color:var(--muted)}
+.howto b{color:var(--text)}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;background:var(--text);color:var(--bg);font-weight:700;font-size:14px;padding:10px 18px;border-radius:999px;z-index:40;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <button class="tb grp-btn" id="grpBtn" aria-label="グループを切り替える">
+      <span class="dots" id="grpDots"></span>
+      <span class="gn" id="grpName"></span>
+      <span class="caret">▼</span>
+    </button>
+    <button class="tb total-btn" id="totalBtn" aria-label="本日の集計を見る">
+      <span class="lb">本日</span><span class="v" id="totalV">0</span><span class="u">枚</span>
+    </button>
+    <button class="tb icon-btn" id="setBtn" aria-label="設定">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+  <main class="grid" id="grid"></main>
+</div>
+
+<!-- 撮影の種類を選ぶ -->
+<div class="ov" id="ovPick"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hPick">
+  <div class="sh-h"><span class="mc-dot" id="pickDot"></span><h2 id="hPick"></h2><button class="x" data-close aria-label="閉じる">×</button></div>
+  <div class="pk-ctl">
+    <div class="seg" id="pkCount" role="group" aria-label="券の枚数"></div>
+    <div class="seg" id="pkSame" role="group" aria-label="種類の決め方"></div>
+    <div class="slots" id="pkSlots"></div>
+  </div>
+  <p class="note" id="pickNote"></p>
+  <div class="pgrid" id="pickGrid"></div>
+</div></div>
+
+<!-- グループ一覧 -->
+<div class="ov" id="ovGroups"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hGroups">
+  <div class="sh-h"><h2 id="hGroups">グループ</h2><button class="x" data-close aria-label="閉じる">×</button></div>
+  <div class="glist" id="glist"></div>
+  <button class="btn wide" id="newGroupBtn">＋ 新しいグループを作る</button>
+  <div class="stack">
+    <div class="sec-title">別のスマホに設定を移す</div>
+    <p class="note">グループの設定はこの端末のブラウザに保存されます。スタッフ全員で同じ設定を使うときは、「設定をコピー」した文字をLINEなどで送り、受け取った端末で下の欄に貼り付けて読み込んでください。</p>
+    <button class="btn wide" id="exportBtn">設定をコピー</button>
+    <textarea class="inp" id="importTx" placeholder="ここにコピーした設定を貼り付け" aria-label="読み込む設定"></textarea>
+    <button class="btn wide" id="importBtn">貼り付けた設定を読み込む</button>
+  </div>
+</div></div>
+
+<!-- グループ編集 -->
+<div class="ov" id="ovEdit"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hEdit">
+  <div class="sh-h"><h2 id="hEdit">グループを編集</h2><button class="x" data-close aria-label="閉じる">×</button></div>
+  <div class="stack">
+    <label class="sec-title" for="eName">グループ名</label>
+    <input class="inp" id="eName" maxlength="30" placeholder="例：夜明けのアイリス">
+  </div>
+  <div class="stack">
+    <div class="sec-title">撮影メニューと1枚あたりの秒数</div>
+    <p class="note" style="margin-top:-2px">使わないメニューはスイッチをオフにすると、選択肢に出なくなります。</p>
+    <div class="mtbl" id="eMenu"></div>
+  </div>
+  <div class="stack">
+    <div class="sec-title">1人が一度に出せる券の最大枚数</div>
+    <div class="chips" id="eMaxChips"></div>
+  </div>
+  <div class="stack">
+    <div class="sec-title">残り何秒から赤く光らせるか</div>
+    <div class="chips" id="eWarnChips"></div>
+  </div>
+  <div class="stack">
+    <div class="row"><div class="sec-title" style="flex:1">メンバー（最大8人）</div><span class="mnum" id="eCount"></span></div>
+    <div class="stack" id="eMembers"></div>
+    <button class="btn wide" id="eAdd">＋ メンバーを追加</button>
+  </div>
+  <button class="btn primary wide" id="eSave">保存する</button>
+  <button class="btn danger wide" id="eDel">このグループを削除</button>
+</div></div>
+
+<!-- カラー選択 -->
+<div class="ov" id="ovColor" style="z-index:25"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hColor">
+  <div class="sh-h"><h2 id="hColor">メンバーカラー</h2><button class="x" data-close aria-label="閉じる">×</button></div>
+  <div class="palette" id="palette"></div>
+  <label class="custom-color">その他の色を選ぶ<input type="color" id="customColor" style="margin-left:auto"></label>
+</div></div>
+
+<!-- 枚数の編集 -->
+<div class="ov" id="ovCount" style="z-index:25"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hCount">
+  <div class="sh-h"><span class="mc-dot" id="countDot"></span><h2 id="hCount"></h2><button class="x" data-close aria-label="閉じる">×</button></div>
+  <div class="ctotal"><b id="cTotal">0</b><span>枚（本日の合計）</span></div>
+  <div class="stack" id="cRows"></div>
+  <button class="btn primary wide" data-close>閉じる</button>
+</div></div>
+
+<!-- 集計 -->
+<div class="ov" id="ovSum"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hSum">
+  <div class="sh-h"><h2 id="hSum">集計</h2><button class="x" data-close aria-label="閉じる">×</button></div>
+  <select class="inp" id="sDate" aria-label="日付"></select>
+  <div class="tbl-wrap"><table class="stbl" id="sTable"></table></div>
+  <p class="note" id="sLegend">数字の下は内訳です。メンバー名をタップすると、その日の枚数を修正できます。</p>
+  <button class="btn primary wide" id="sCopy">集計をコピー（LINE報告用）</button>
+  <textarea class="inp" id="sManual" readonly hidden aria-label="集計テキスト" style="height:160px"></textarea>
+  <button class="btn danger wide" id="sReset">この日の枚数・警告・超過時間をリセット</button>
+  <p class="note">日付は朝5時に切り替わります（深夜のイベントでも同じ日として数えます）。</p>
+</div></div>
+
+<!-- 設定 -->
+<div class="ov" id="ovSet"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hSet">
+  <div class="sh-h"><h2 id="hSet">設定</h2><button class="x" data-close aria-label="閉じる">×</button></div>
+  <div class="stack">
+    <label class="tg"><span class="tx">音を鳴らす<small>残り3秒でピッ。時間切れから「終了」を押すまで（超過中ずっと）、メンバーごとの通知音が鳴り続けます</small></span><span class="sw"><input type="checkbox" id="optSound"><span></span></span></label>
+    <label class="tg"><span class="tx">バイブレーション<small>超過中は「終了」まで振動を繰り返します（Androidのみ・iPhoneは非対応）</small></span><span class="sw"><input type="checkbox" id="optVib"><span></span></span></label>
+    <label class="tg"><span class="tx">画面を消さない<small>タイマー使用中にスリープしないようにします</small></span><span class="sw"><input type="checkbox" id="optWake"><span></span></span></label>
+    <button class="btn wide" id="testSound">通知音を試す（1人目のメンバー）</button>
+    <p class="note">通知音はグループの「編集」で、メンバーごとに20種類から選べます。</p>
+  </div>
+  <div class="stack">
+    <div class="sec-title">使い方</div>
+    <div class="howto">
+      <div><b>カードをタップ</b> → 券の<b>枚数</b>（最大2枚・グループの編集で変更可）を選ぶ。</div>
+      <div>2枚のときは<b>「2枚とも同じ」</b>か<b>「1枚ずつ違う」</b>を選び、チェキ・写メ・動画、ソロ・ツーショット、初回を選ぶと、枚数分の秒数でカウントダウンが始まります。</div>
+      <div><b>カウント中にタップ</b>すると一時停止、もう一度タップで再開。</div>
+      <div><b>＋追加</b>はスタート後に券を足すとき用です（最大枚数に達すると消えます）。</div>
+      <div><b>終了</b>で途中終了。</div>
+      <div><b>時間切れ</b>になるとカードが点滅し、メンバーごとの通知音（とバイブ）が<b>「終了」を押すまで超過中ずっと鳴り続けます</b>。READYには戻りません。声をかけたら<b>CALL</b>（カードのタップでも可）。</div>
+      <div>CALLのあと、終わったら<b>終了</b>（READYに戻る）、まだ続いていたら<b>CALL 2回目</b>、<b>CALL 3回目</b>…と押します。</div>
+      <div>同じ回で<b>CALLが3回目</b>になると、そのメンバーに<b>警告</b>がつきます（赤い⚠マーク）。3回目のボタンは赤で表示されます。警告の回数は集計にも出ます。</div>
+      <div><b>超過時間</b>：TIME UPから「終了」を押すまでの時間を、メンバーごとにその日の合計として記録します。待機中のカード左下と集計に出ます。</div>
+      <div>カード右上の<b>枚数</b>をタップすると、種類ごとに本日の枚数を修正できます。</div>
+      <div>メニューの秒数やオン・オフは、グループの<b>編集</b>で変えられます。</div>
+    </div>
+  </div>
+</div></div>
+
+<!-- 確認 -->
+<div class="ov center" id="ovConfirm" style="z-index:30"><div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="cfMsg">
+  <p id="cfMsg" style="font-weight:700;line-height:1.6"></p>
+  <div class="row"><button class="btn" style="flex:1" id="cfNo">やめる</button><button class="btn primary" style="flex:1" id="cfYes">OK</button></div>
+</div></div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const LS = 'chekiTimer.data.v1', LSC = 'chekiTimer.counts.v1';
+  const COLORS = [
+    ['赤', '#FF3B4E'], ['ピンク', '#FF7EB6'], ['オレンジ', '#FF9133'], ['黄', '#FFD83B'],
+    ['黄緑', '#A8E03C'], ['緑', '#2DCB78'], ['ミント', '#7FE8D0'], ['水色', '#5CD2F2'],
+    ['青', '#3E7BFF'], ['紫', '#A45CFF'], ['ラベンダー', '#C9A8FF'], ['コーラル', '#FF8A7A'],
+    ['白', '#F4F2F7'], ['黒', '#4A4756'], ['金', '#D9B44A'], ['銀', '#B7BFCC']
+  ];
+  /* 撮影メニュー: 種類 × ソロ/ツーショット */
+  const KINDS = [
+    { id: 'c', name: 'チェキ', short: 'チェキ', color: 'var(--k-c)' },
+    { id: 'p', name: '写メ', short: '写メ', color: 'var(--k-p)' },
+    { id: 'v', name: '動画', short: '動画', color: 'var(--k-v)' },
+    { id: 'f', name: '初回（写メ）', short: '初回', color: 'var(--k-f)' }
+  ];
+  const STYLES = [{ id: 's', name: 'ソロ', short: 'ソ' }, { id: 't', name: 'ツーショット', short: 'ツ' }];
+  const ITEMS = [];
+  KINDS.forEach(k => STYLES.forEach(s => ITEMS.push({ k: k.id + s.id, kind: k, style: s })));
+  const ITEM = Object.fromEntries(ITEMS.map(i => [i.k, i]));
+  const DEF_SEC = { c: 30, p: 20, v: 30, f: 15 };
+  const itemLabel = k => { const i = ITEM[k]; return `${i.kind.short}・${i.style.id === 's' ? 'ソロ' : 'ツーショ'}`; };
+  /* アイコン（チェキ＝プリント、写メ＝スマホ、動画＝ビデオカメラ、初回＝若葉、ソロ＝1人、ツーショ＝2人） */
+  const ICON_PATHS = {
+    c: '<rect x="4.5" y="2.5" width="15" height="19" rx="1.6"/><rect x="7" y="5" width="10" height="10" rx=".6" class="ic-fill"/>',
+    p: '<rect x="6.5" y="2" width="11" height="20" rx="2.4"/><circle cx="12" cy="10.5" r="3"/><path d="M10.5 18.5h3"/>',
+    v: '<rect x="2.5" y="6.5" width="13" height="11" rx="2.2"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z" class="ic-fill"/>',
+    f: '<path d="M12 9.5L5 4v10.5L12 21z" class="ic-fill"/><path d="M12 9.5L19 4v10.5L12 21zM12 9.5L5 4v10.5L12 21z"/>',
+    b: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z" class="ic-fill"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+    o: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/>',
+    s: '<circle cx="12" cy="7.5" r="3.6" class="ic-fill"/><path d="M4.5 21c0-4.3 3.4-7.5 7.5-7.5s7.5 3.2 7.5 7.5" class="ic-fill"/>',
+    t: '<circle cx="8" cy="8" r="3.1" class="ic-fill"/><circle cx="16.5" cy="8.8" r="2.8" class="ic-fill"/><path d="M1.8 21c0-3.8 2.8-6.6 6.2-6.6s6.2 2.8 6.2 6.6" class="ic-fill"/><path d="M15.2 14.6c.4-.1.9-.2 1.3-.2 3 0 5.6 2.5 5.6 6.1"/>'
+  };
+  const icon = (id, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[id]}</svg>`;
+  const kindIcon = k => icon(ITEM[k].kind.id, 'ic-k');
+  const styleIcon = k => icon(ITEM[k].style.id, 'ic-s');
+  const itemHTML = k => `<span class="it">${kindIcon(k)}${styleIcon(k)}${esc(itemLabel(k))}</span>`;
+  const WARN_PRESETS = [0, 3, 5, 10];
+  const MAX = 8;
+  /* 通知音20種類：[音(MIDI番号 or Hz), 開始秒, 長さ, 波形, 終わりの音(スライド)] */
+  const M = n => 440 * 2 ** ((n - 69) / 12);
+  const SOUNDS = [
+    ['ピンポン', [[M(79), 0, .4, 'sine'], [M(76), .3, .7, 'sine']]],
+    ['ピピピ', [[2000, 0, .08, 'square'], [2000, .14, .08, 'square'], [2000, .28, .08, 'square']]],
+    ['チャイム', [[M(76), 0, .45, 'triangle'], [M(72), .3, .45, 'triangle'], [M(74), .6, .45, 'triangle'], [M(67), .9, .7, 'triangle']]],
+    ['キラキラ', [[M(84), 0, .3, 'sine'], [M(88), .07, .3, 'sine'], [M(91), .14, .3, 'sine'], [M(96), .21, .5, 'sine']]],
+    ['ベル', [[M(81), 0, 1.1, 'triangle'], [M(93), 0, .6, 'sine']]],
+    ['ポコポコ', [[520, 0, .1, 'sine', 180], [520, .14, .1, 'sine', 180], [620, .28, .1, 'sine', 200], [620, .42, .1, 'sine', 200]]],
+    ['ファンファーレ', [[M(72), 0, .14, 'triangle'], [M(76), .14, .14, 'triangle'], [M(79), .28, .14, 'triangle'], [M(84), .42, .6, 'triangle']]],
+    ['デジタル', [[M(84), 0, .1, 'square'], [M(88), .12, .1, 'square'], [M(84), .3, .1, 'square'], [M(88), .42, .1, 'square']]],
+    ['目覚まし', [[1400, 0, .06, 'square'], [1100, .08, .06, 'square'], [1400, .16, .06, 'square'], [1100, .24, .06, 'square'], [1400, .32, .06, 'square'], [1100, .40, .06, 'square']]],
+    ['ハート', [[M(81), 0, .3, 'sine'], [M(85), .22, .6, 'sine']]],
+    ['ドレミ', [[M(72), 0, .2, 'triangle'], [M(74), .2, .2, 'triangle'], [M(76), .4, .4, 'triangle']]],
+    ['ミレド', [[M(76), 0, .2, 'triangle'], [M(74), .2, .2, 'triangle'], [M(72), .4, .4, 'triangle']]],
+    ['サイレン', [[600, 0, .45, 'triangle', 1200], [1200, .45, .45, 'triangle', 600]]],
+    ['ピコピコ', [[M(79), 0, .08, 'square'], [M(84), .1, .08, 'square'], [M(79), .2, .08, 'square'], [M(84), .3, .08, 'square']]],
+    ['ウィンドチャイム', [[M(88), 0, .7, 'sine'], [M(95), .09, .7, 'sine'], [M(92), .18, .7, 'sine'], [M(97), .27, .7, 'sine'], [M(90), .36, .7, 'sine']]],
+    ['ディンドン', [[M(76), 0, .6, 'triangle'], [M(72), .45, .9, 'triangle']]],
+    ['ハープ', [[M(67), 0, .5, 'triangle'], [M(71), .05, .5, 'triangle'], [M(74), .1, .5, 'triangle'], [M(79), .15, .5, 'triangle'], [M(83), .2, .5, 'triangle'], [M(86), .25, .7, 'triangle']]],
+    ['オルゴール', [[M(79), 0, .4, 'sine'], [M(84), .16, .4, 'sine'], [M(88), .32, .4, 'sine'], [M(86), .48, .4, 'sine'], [M(84), .64, .6, 'sine']]],
+    ['ブザー', [[220, 0, .55, 'sawtooth']]],
+    ['コイン', [[M(83), 0, .08, 'square'], [M(88), .08, .45, 'square']]]
+  ];
+  const VOL = { sine: .32, triangle: .38, square: .11, sawtooth: .13 };
+
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const load = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } };
+  const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const clampSec = (v, d) => { v = parseInt(v, 10); return v >= 5 && v <= 600 ? v : d; };
+  const normHex = c => /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : '#FF7EB6';
+
+  function defaultMenu(chekiSec = 30) {
+    const m = {};
+    for (const it of ITEMS) m[it.k] = { on: true, sec: it.kind.id === 'c' ? chekiSec : DEF_SEC[it.kind.id] };
+    return m;
+  }
+  function normGroup(raw) {
+    const legacy = clampSec(raw.seconds, 30);
+    const menu = defaultMenu(legacy);
+    if (raw.menu && typeof raw.menu === 'object') {
+      for (const it of ITEMS) {
+        const r = raw.menu[it.k];
+        if (r) menu[it.k] = { on: !!r.on, sec: clampSec(r.sec, menu[it.k].sec) };
+      }
+    }
+    if (!ITEMS.some(i => menu[i.k].on)) menu.cs.on = true;
+    return {
+      id: typeof raw.id === 'string' ? raw.id : uid(),
+      name: String(raw.name || '新しいグループ').slice(0, 30),
+      warn: WARN_PRESETS.includes(raw.warn) ? raw.warn : 5,
+      maxT: [1, 2, 3, 4].includes(raw.maxT) ? raw.maxT : 2,
+      menu,
+      members: (Array.isArray(raw.members) ? raw.members : []).slice(0, MAX).map((m, i) => ({
+        id: typeof m.id === 'string' ? m.id : uid(), name: String(m.name || `メンバー${i + 1}`).slice(0, 20), color: normHex(m.color),
+        sound: Number.isInteger(m.sound) && m.sound >= 0 && m.sound < SOUNDS.length ? m.sound : i % SOUNDS.length
+      }))
+    };
+  }
+  function sampleGroup() {
+    return normGroup({
+      name: 'サンプルグループ', warn: 5,
+      members: [['あかり', '#FF3B4E'], ['もも', '#FF7EB6'], ['みかん', '#FF9133'], ['ひまり', '#FFD83B'],
+                ['わかば', '#2DCB78'], ['そら', '#5CD2F2'], ['るり', '#3E7BFF'], ['すみれ', '#A45CFF']].map(([name, color]) => ({ name, color }))
+    });
+  }
+
+  let data = load(LS, null);
+  if (!data || !Array.isArray(data.groups) || !data.groups.length) {
+    const g = sampleGroup();
+    data = { groups: [g], activeId: g.id, settings: {} };
+  }
+  data.groups = data.groups.map(normGroup).filter(g => g.members.length);
+  if (!data.groups.length) data.groups = [sampleGroup()];
+  data.settings = Object.assign({ sound: true, vibrate: true, wake: true }, data.settings || {});
+  if (!data.groups.find(g => g.id === data.activeId)) data.activeId = data.groups[0].id;
+
+  /* counts[groupId][day][memberId] = { cs: n, ct: n, ... } (旧形式の数値はチェキ・ソロとして引き継ぐ) */
+  let counts = load(LSC, {});
+  if (typeof counts !== 'object' || !counts) counts = {};
+  for (const g in counts) for (const d in counts[g]) for (const m in counts[g][d]) {
+    if (typeof counts[g][d][m] === 'number') counts[g][d][m] = { cs: counts[g][d][m] };
+  }
+  const saveData = () => store(LS, data);
+  const saveCounts = () => store(LSC, counts);
+  const LSO = 'chekiTimer.overs.v1';
+  let overs = load(LSO, {});
+  if (typeof overs !== 'object' || !overs) overs = {};
+  const saveOvers = () => store(LSO, overs);
+  const LSW = 'chekiTimer.warns.v1';
+  let warns = load(LSW, {});
+  if (typeof warns !== 'object' || !warns) warns = {};
+  const saveWarns = () => store(LSW, warns);
+  const WARN_SVG = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>';
+  saveData(); saveCounts();
+  const group = () => data.groups.find(g => g.id === data.activeId);
+  const enabled = (g = group()) => ITEMS.filter(i => g.menu[i.k].on);
+
+  /* ---------- dates & counts ---------- */
+  const pad = n => String(n).padStart(2, '0');
+  function dayKey(ts = Date.now()) { const d = new Date(ts - 5 * 3600e3); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+  function dayLabel(k) { const [y, m, d] = k.split('-').map(Number); return `${y}/${pad(m)}/${pad(d)}（${'日月火水木金土'[new Date(y, m - 1, d).getDay()]}）`; }
+  const sum = o => Object.values(o || {}).reduce((a, b) => a + (b || 0), 0);
+  const memberDay = (gid, mid, k = dayKey()) => (counts[gid] && counts[gid][k] && counts[gid][k][mid]) || {};
+  function addCount(gid, mid, item, n, k = dayKey()) {
+    counts[gid] = counts[gid] || {};
+    counts[gid][k] = counts[gid][k] || {};
+    const o = counts[gid][k][mid] = counts[gid][k][mid] || {};
+    o[item] = Math.max(0, (o[item] || 0) + n);
+    saveCounts();
+    paintCounts();
+  }
+  /* 超過時間：overs[groupId][day][memberId] = { ms: 累計ミリ秒, n: 超過した回数 } */
+  const getOver = (gid, mid, k = dayKey()) => (overs[gid] && overs[gid][k] && overs[gid][k][mid]) || { ms: 0, n: 0 };
+  function addOver(gid, mid, ms, n, k = dayKey()) {
+    overs[gid] = overs[gid] || {};
+    overs[gid][k] = overs[gid][k] || {};
+    const o = overs[gid][k][mid] = overs[gid][k][mid] || { ms: 0, n: 0 };
+    o.ms = Math.max(0, o.ms + ms); o.n = Math.max(0, o.n + n);
+    saveOvers();
+  }
+  function durText(ms) { const s = Math.round(ms / 1000), m = Math.floor(s / 60); return m ? `${m}分${pad(s % 60)}秒` : `${s}秒`; }
+  function durShort(ms) { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${pad(s % 60)}`; }
+  const getWarn = (gid, mid, k = dayKey()) => (warns[gid] && warns[gid][k] && warns[gid][k][mid]) || 0;
+  function addWarn(gid, mid, n, k = dayKey()) {
+    warns[gid] = warns[gid] || {};
+    warns[gid][k] = warns[gid][k] || {};
+    warns[gid][k][mid] = Math.max(0, (warns[gid][k][mid] || 0) + n);
+    saveWarns();
+    paintCounts();
+  }
+  const dayTotal = (gid, k = dayKey()) => Object.values((counts[gid] && counts[gid][k]) || {}).reduce((a, o) => a + sum(o), 0);
+
+  /* ---------- colour helpers ---------- */
+  function lum(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const f = c => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; };
+    return .2126 * f(n >> 16 & 255) + .7152 * f(n >> 8 & 255) + .0722 * f(n & 255);
+  }
+  const ink = hex => lum(hex) > .26 ? '#17131F' : '#FFFFFF';
+
+  /* ---------- feedback: sound, vibration, wake lock ---------- */
+  let ac = null;
+  function audio() {
+    if (!data.settings.sound) return null;
+    try {
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      return ac;
+    } catch (e) { return null; }
+  }
+  function tone(freq, dur, vol = .25, when = 0) {
+    const c = audio(); if (!c) return;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    const t0 = c.currentTime + when;
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(vol, t0 + .01);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t0 + dur + .05);
+  }
+  /* 通知音を1回鳴らす。鳴らしたオシレーターを返す（CALLで即停止するため） */
+  function playSound(id) {
+    const c = audio(); if (!c) return [];
+    const snd = SOUNDS[id] || SOUNDS[0], out = [];
+    for (const [f, at, d, type, f2] of snd[1]) {
+      const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + at, vol = VOL[type] || .3;
+      o.type = type; o.frequency.setValueAtTime(f, t0);
+      if (f2) o.frequency.linearRampToValueAtTime(f2, t0 + d);
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(vol, t0 + .01);
+      g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+      o.connect(g); g.connect(c.destination);
+      o.start(t0); o.stop(t0 + d + .05);
+      out.push(o);
+    }
+    return out;
+  }
+  const soundLen = id => Math.max(...(SOUNDS[id] || SOUNDS[0])[1].map(n => n[1] + n[2]));
+  function vib(p) { if (data.settings.vibrate && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
+  function feedback(kind) {
+    if (kind === 'start') { tone(880, .08, .15); vib(25); }
+    else if (kind === 'pip') { tone(1320, .07, .2); vib(15); }
+    else if (kind === 'warn') { tone(330, .25, .35); tone(330, .35, .35, .32); vib([400, 120, 400]); }
+    else if (kind === 'end') { tone(988, .2, .32); tone(1319, .45, .32, .2); vib([220, 80, 220]); }
+  }
+  let wl = null;
+  async function wake() {
+    if (!data.settings.wake || wl || !('wakeLock' in navigator)) return;
+    try { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && anyActive()) wake();
+  });
+
+  /* ---------- timers ---------- */
+  const T = {};
+  const lastItem = {};
+  const tm = mid => T[mid] || (T[mid] = { s: 'idle' });
+  const secOf = k => group().menu[k].sec * 1000;
+  const anyActive = () => Object.values(T).some(t => t.s === 'run' || t.s === 'pause');
+
+  /* 券の枚数分の種類（例 ['cs','cs'] / ['cs','ps']）をまとめてスタート */
+  function start(mid, items) {
+    if (!Array.isArray(items)) items = [items];
+    const t = tm(mid), tot = items.reduce((a, k) => a + secOf(k), 0);
+    Object.assign(t, { s: 'run', items: items.slice(), total: tot, endAt: performance.now() + tot, pip: null });
+    lastItem[mid] = items[items.length - 1];
+    items.forEach(k => addCount(data.activeId, mid, k, 1));
+    feedback('start'); wake();
+  }
+  function addItem(mid, k) {
+    const t = tm(mid);
+    if (t.s !== 'run' && t.s !== 'pause') return start(mid, k);
+    const add = secOf(k);
+    if (t.s === 'run') t.endAt += add; else t.rem += add;
+    t.total += add; t.pip = null; t.items.push(k);
+    lastItem[mid] = k;
+    addCount(data.activeId, mid, k, 1);
+    feedback('start');
+  }
+  function togglePause(mid) {
+    const t = tm(mid), now = performance.now();
+    if (t.s === 'run') { t.rem = Math.max(0, t.endAt - now); t.s = 'pause'; }
+    else if (t.s === 'pause') { t.endAt = now + t.rem; t.s = 'run'; }
+  }
+  /* 時間切れ〜「終了」までを超過時間として記録 */
+  function flushOver(mid) {
+    const t = T[mid];
+    if (t && (t.s === 'done' || t.s === 'called') && t.doneAt != null) {
+      addOver(data.activeId, mid, performance.now() - t.doneAt, 1);
+      t.doneAt = null;
+    }
+  }
+  const stop = mid => { flushOver(mid); silence(mid); T[mid] = { s: 'idle' }; };
+  function clearTimers(keep) { for (const k in T) if (!keep || !keep.has(k)) { flushOver(k); silence(k); delete T[k]; } }
+  /* 時間切れ後：CALL →（A）終了 ／（B）まだ続いている。Bが2回続いたらそのメンバーに警告 */
+  function silence(mid) {
+    const t = T[mid]; if (!t) return;
+    (t.osc || []).forEach(o => { try { o.stop(); } catch (e) {} });
+    t.osc = [];
+    if (navigator.vibrate) { try { navigator.vibrate(0); } catch (e) {} }
+  }
+  function callIt(mid) {
+    const t = tm(mid); if (t.s !== 'done') return;
+    t.s = 'called'; t.calls = (t.calls || 0) + 1;
+  }
+  /* CALL後：終了 ／ CALL◯回目。3回目のCALLでそのメンバーに警告+1（1回の撮影につき1回まで） */
+  function recall(mid) {
+    const t = tm(mid); if (t.s !== 'called') return;
+    t.calls = (t.calls || 1) + 1;
+    if (t.calls >= 3 && !t.warned) {
+      t.warned = true;
+      addWarn(data.activeId, mid, 1);
+      feedback('warn');
+      const m = group().members.find(x => x.id === mid);
+      toast(`${m ? m.name : 'メンバー'}：CALL${t.calls}回目で警告がつきました`);
+    } else { tone(660, .12, .2); vib(60); }
+  }
+  function itemsLabel(items) {
+    const c = {};
+    items.forEach(k => { c[k] = (c[k] || 0) + 1; });
+    const ent = Object.entries(c);
+    if (ent.length === 1) return itemHTML(ent[0][0]).replace('</span>', (ent[0][1] > 1 ? `×${ent[0][1]}` : '') + '</span>');
+    return ent.map(([k, n]) => `<span class="it">${kindIcon(k)}${styleIcon(k)}${n > 1 ? `×${n}` : ''}</span>`).join('<span class="plus">＋</span>');
+  }
+
+  /* ---------- grid ---------- */
+  const grid = $('#grid');
+  let cards = {};
+  function layout() {
+    const n = group().members.length;
+    const land = innerWidth > innerHeight * 1.15;
+    const cols = land ? Math.min(n, 4) : (n <= 3 ? 1 : 2);
+    grid.style.setProperty('--cols', cols);
+    grid.style.setProperty('--rows', Math.ceil(n / cols));
+  }
+  const inner = m => `<div class="nm">${esc(m.name)}</div><div class="kd"></div><div class="sec"></div><div class="st"></div><div class="ruler"></div>`;
+  function buildGrid() {
+    const g = group();
+    grid.innerHTML = '';
+    cards = {};
+    for (const m of g.members) {
+      const el = document.createElement('div');
+      el.className = 'card s-idle';
+      el.dataset.id = m.id;
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-label', `${m.name}のタイマー`);
+      el.style.setProperty('--mc', m.color);
+      el.style.setProperty('--ink', ink(m.color));
+      el.innerHTML = `<div class="layer base">${inner(m)}</div><div class="layer fill">${inner(m)}</div>
+        <div class="tr"><button class="pill wb" data-act="count" hidden aria-label="${esc(m.name)}の警告">${WARN_SVG}<b>0</b></button><button class="pill cnt" data-act="count" aria-label="${esc(m.name)}の枚数を編集"><b>0</b><span>枚</span></button></div>
+        <div class="ctrl c-run"><button class="pill" data-act="plus">＋追加</button><button class="pill" data-act="stop">終了</button></div>
+        <div class="ctrl c-done"><button class="pill call" data-act="call">CALL</button></div>
+        <div class="ctrl c-called"><button class="pill" data-act="endA">終了</button><button class="pill cont" data-act="recall"><span class="rc">CALL</span><small class="rn">2回目</small></button></div>`;
+      grid.appendChild(el);
+      cards[m.id] = { el, secs: el.querySelectorAll('.sec'), sts: el.querySelectorAll('.st'), kds: el.querySelectorAll('.kd'), cnt: el.querySelector('.cnt b'), wb: el.querySelector('.wb'), rc: el.querySelector('[data-act=recall]'), rn: el.querySelector('.rn'), wn: el.querySelector('.wb b'), key: '', cls: '', total: 0 };
+    }
+    layout();
+    paintHeader();
+    paintCounts();
+  }
+  function paintHeader() {
+    const g = group();
+    $('#grpName').textContent = g.name;
+    $('#grpDots').innerHTML = g.members.map(m => `<i style="background:${m.color}"></i>`).join('');
+  }
+  function paintCounts() {
+    const g = group();
+    for (const m of g.members) {
+      const c = cards[m.id]; if (!c) continue;
+      c.cnt.textContent = sum(memberDay(g.id, m.id));
+      const w = getWarn(g.id, m.id);
+      c.wb.hidden = !w; c.wn.textContent = w;
+      c.el.classList.toggle('has-warn', !!w);
+    }
+    $('#totalV').textContent = dayTotal(g.id);
+  }
+  function fmt(ms) {
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    return s >= 60 ? `${Math.floor(s / 60)}:${pad(s % 60)}` : `${s}<small>秒</small>`;
+  }
+  function ofmt(ms, big) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const v = s >= 60 ? `${Math.floor(s / 60)}:${pad(s % 60)}` : `${s}${big ? '<small>秒</small>' : '秒'}`;
+    return '+' + v;
+  }
+  function paint(m, now, g, en) {
+    const c = cards[m.id]; if (!c) return;
+    const t = tm(m.id);
+    let p = 1, html, st = '', kd = '', word = false, total = 0, warn = false;
+    if (t.s === 'idle') {
+      if (en.length === 1) { total = g.menu[en[0].k].sec * 1000; html = fmt(total); kd = itemHTML(en[0].k); st = 'タップで開始'; }
+      else { html = 'READY'; word = true; st = 'タップで受付'; }
+      const ov = getOver(g.id, m.id);
+      if (ov.ms >= 1000) st = `超過計 ${durShort(ov.ms)}（${ov.n}回）`;
+    } else if (t.s === 'run' || t.s === 'pause') {
+      const rem = t.s === 'run' ? Math.max(0, t.endAt - now) : t.rem;
+      total = t.total; p = rem / total; html = fmt(rem); kd = itemsLabel(t.items);
+      warn = t.s === 'run' && g.warn > 0 && rem <= g.warn * 1000;
+      if (t.s === 'pause') st = '停止中';
+    } else if (t.s === 'done') {
+      html = 'TIME UP'; word = true;
+      kd = `<span class="it">超過 ${ofmt(now - t.doneAt)}</span>`;
+    } else {
+      html = ofmt(now - t.doneAt, true);
+      kd = `<span class="it">CALL ${t.calls || 1}回目</span>`;
+      const next = (t.calls || 1) + 1;
+      if (c.rnext !== next) { c.rnext = next; c.rn.textContent = `${next}回目`; c.rc.classList.toggle('last', next === 3); c.rc.setAttribute('aria-label', `CALL ${next}回目`); }
+    }
+    c.el.style.setProperty('--p', p.toFixed(4));
+    const full = t.items && t.items.length >= (g.maxT || 2);
+    const cls = `card s-${t.s}${warn ? ' warn' : ''}${c.wb.hidden ? '' : ' has-warn'}${full ? ' full' : ''}`;
+    if (cls !== c.cls) { c.el.className = cls; c.cls = cls; }
+    const key = html + '|' + st + '|' + kd;
+    if (key !== c.key) {
+      c.key = key;
+      c.secs.forEach(e => { e.innerHTML = html; e.classList.toggle('word', word); });
+      c.sts.forEach(e => { e.textContent = st; });
+      c.kds.forEach(e => { e.innerHTML = kd; });
+    }
+    if (total && total !== c.total) {
+      c.total = total;
+      const long = total > 60000;
+      c.el.style.setProperty('--ts', ((long ? 5000 : 1000) / total * 100) + '%');
+      c.el.style.setProperty('--tb', ((long ? 30000 : 5000) / total * 100) + '%');
+    }
+  }
+  let lastCountCheck = 0, lastDay = dayKey();
+  function frame() {
+    const now = performance.now(), g = group(), en = enabled(g);
+    for (const m of g.members) {
+      const t = tm(m.id);
+      if (t.s === 'run') {
+        const rem = t.endAt - now;
+        if (rem <= 0) { t.s = 'done'; t.doneAt = now; t.nextRing = now; }
+        else if (g.warn > 0) {
+          const sl = Math.ceil(rem / 1000);
+          if (sl <= 3 && t.pip !== sl) { t.pip = sl; feedback('pip'); }
+        }
+      }
+      /* 超過中（TIME UP〜「終了」まで）は、CALL後もメンバーの通知音とバイブを繰り返す */
+      if ((t.s === 'done' || t.s === 'called') && now >= (t.nextRing || 0)) {
+        t.osc = playSound(m.sound);
+        vib([350, 150, 350]);
+        t.nextRing = now + Math.max(1400, soundLen(m.sound) * 1000 + 650);
+      }
+      paint(m, now, g, en);
+    }
+    if (now - lastCountCheck > 20000) { lastCountCheck = now; const k = dayKey(); if (k !== lastDay) { lastDay = k; paintCounts(); } }
+    requestAnimationFrame(frame);
+  }
+
+  function onCard(card, act) {
+    const mid = card.dataset.id, en = enabled();
+    if (act === 'count') return openCount(mid);
+    if (act === 'stop' || act === 'endA') return stop(mid);
+    if (act === 'call') return callIt(mid);
+    if (act === 'recall') return recall(mid);
+    if (act === 'plus') return en.length === 1 ? addItem(mid, en[0].k) : openPick(mid, 'add');
+    const g = group();
+    const t = tm(mid);
+    if (t.s === 'idle') { en.length === 1 && g.maxT === 1 ? start(mid, [en[0].k]) : openPick(mid, 'start'); }
+    else if (t.s === 'done') callIt(mid);
+    else if (t.s === 'called') toast('「終了」か「CALL」を選んでください');
+    else togglePause(mid);
+  }
+  grid.addEventListener('click', e => {
+    const card = e.target.closest('.card'); if (!card) return;
+    const a = e.target.closest('[data-act]');
+    onCard(card, a ? a.dataset.act : null);
+  });
+  grid.addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('card')) { e.preventDefault(); onCard(e.target, null); }
+  });
+  addEventListener('resize', layout);
+
+  /* ---------- overlays ---------- */
+  const open = id => { $('#' + id).classList.add('open'); };
+  const close = id => { $('#' + id).classList.remove('open'); };
+  document.querySelectorAll('.ov').forEach(ov => {
+    ov.addEventListener('click', e => {
+      if (ov.id === 'ovConfirm') return;
+      if (e.target === ov || e.target.closest('[data-close]')) ov.classList.remove('open');
+    });
+  });
+  let toastTimer;
+  function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2000); }
+  function ask(msg, yes = 'OK') {
+    return new Promise(res => {
+      $('#cfMsg').textContent = msg; $('#cfYes').textContent = yes;
+      open('ovConfirm');
+      const done = v => { close('ovConfirm'); $('#cfYes').onclick = $('#cfNo').onclick = null; res(v); };
+      $('#cfYes').onclick = () => done(true); $('#cfNo').onclick = () => done(false);
+    });
+  }
+  async function copyText(txt, fallbackEl) {
+    try { await navigator.clipboard.writeText(txt); toast('コピーしました'); return; } catch (e) {}
+    if (fallbackEl) { fallbackEl.hidden = false; fallbackEl.value = txt; fallbackEl.focus(); fallbackEl.select(); toast('表示された文字を長押ししてコピーしてください'); }
+  }
+
+  /* ---------- type picker ---------- */
+  /* 流れ：券の枚数（最大maxT枚）→ 全部同じ／1枚ずつ違う → 種類を選ぶ → 枚数分の秒数でスタート */
+  const P = { mid: null, add: false, count: 1, same: true, chosen: [] };
+  function openPick(mid, mode) {
+    const t = tm(mid);
+    Object.assign(P, { mid, add: mode === 'add' && (t.s === 'run' || t.s === 'pause'), count: 1, same: true, chosen: [] });
+    const m = group().members.find(x => x.id === mid);
+    $('#pickDot').style.setProperty('--mc', m.color);
+    $('#hPick').textContent = P.add ? `${m.name} に追加` : `${m.name} の撮影`;
+    renderPick();
+    open('ovPick');
+  }
+  function renderPick() {
+    const g = group(), maxT = g.maxT || 2;
+    const multi = !P.add && P.count >= 2;
+    $('#pkCount').hidden = P.add || maxT < 2;
+    $('#pkCount').innerHTML = Array.from({ length: maxT }, (_, i) => i + 1)
+      .map(n => `<button class="${P.count === n ? 'on' : ''}" data-count="${n}"><b>${n}</b>枚</button>`).join('');
+    $('#pkSame').hidden = !multi;
+    $('#pkSame').innerHTML = `<button class="${P.same ? 'on' : ''}" data-same="1">${P.count}枚とも同じ</button><button class="${P.same ? '' : 'on'}" data-same="0">1枚ずつ違う</button>`;
+    const slots = $('#pkSlots');
+    slots.hidden = !multi || P.same;
+    slots.style.setProperty('--n', P.count);
+    slots.innerHTML = Array.from({ length: P.count }, (_, i) => {
+      const k = P.chosen[i];
+      if (k) return `<button class="slot filled" style="--kc:${ITEM[k].kind.color}" data-slot="${i}" aria-label="${i + 1}枚目を選び直す"><span class="no">${i + 1}</span>${kindIcon(k)}${styleIcon(k)}${esc(itemLabel(k))}</button>`;
+      return `<div class="slot${i === P.chosen.length ? ' cur' : ''}"><span class="no">${i + 1}枚目</span>${i === P.chosen.length ? '選択中' : ''}</div>`;
+    }).join('');
+    $('#pickNote').textContent = P.add ? '選んだ種類の秒数だけ時間が延び、枚数も1枚増えます。'
+      : P.count === 1 ? '種類を選ぶとすぐにスタートします。'
+      : P.same ? `種類を選ぶと${P.count}枚分の時間でスタートします。`
+      : `${P.chosen.length + 1}枚目の種類を選んでください。${P.count}枚とも選ぶとスタートします。`;
+    const last = lastItem[P.mid];
+    const mult = multi && P.same ? P.count : 1;
+    let html = `<span></span>${STYLES.map(s => `<span class="ch">${icon(s.id)}${s.name}</span>`).join('')}`;
+    for (const k of KINDS) {
+      const its = STYLES.map(s => ITEM[k.id + s.id]);
+      if (!its.some(i => g.menu[i.k].on)) continue;
+      html += `<span class="rh" style="--kc:${k.color}">${icon(k.id, 'ic-k')}${k.short}</span>`;
+      html += its.map(i => g.menu[i.k].on
+        ? `<button class="pk${i.k === last ? ' last' : ''}" style="--kc:${k.color}" data-item="${i.k}"><span class="pk-ic">${kindIcon(i.k)}${styleIcon(i.k)}</span><b>${k.short}${i.style.id === 's' ? 'ソロ' : 'ツーショ'}</b><span class="pk-sec">${g.menu[i.k].sec * mult}<small>秒</small>${mult > 1 ? `<small>（${g.menu[i.k].sec}×${mult}）</small>` : ''}</span></button>`
+        : '<span class="pk-empty" aria-hidden="true"></span>').join('');
+    }
+    $('#pickGrid').innerHTML = html;
+  }
+  $('#pkCount').addEventListener('click', e => { const b = e.target.closest('[data-count]'); if (!b) return; P.count = +b.dataset.count; P.chosen = []; renderPick(); });
+  $('#pkSame').addEventListener('click', e => { const b = e.target.closest('[data-same]'); if (!b) return; P.same = b.dataset.same === '1'; P.chosen = []; renderPick(); });
+  $('#pkSlots').addEventListener('click', e => { const b = e.target.closest('[data-slot]'); if (!b) return; P.chosen = P.chosen.slice(0, +b.dataset.slot); renderPick(); });
+  $('#pickGrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-item]'); if (!b) return;
+    const k = b.dataset.item;
+    if (P.add) { close('ovPick'); return addItem(P.mid, k); }
+    if (P.count === 1 || P.same) { close('ovPick'); return start(P.mid, Array(P.count).fill(k)); }
+    P.chosen.push(k);
+    if (P.chosen.length >= P.count) { close('ovPick'); return start(P.mid, P.chosen.slice()); }
+    renderPick();
+  });
+
+  /* ---------- groups list ---------- */
+  function menuSummary(g) {
+    return KINDS.filter(k => STYLES.some(s => g.menu[k.id + s.id].on)).map(k => {
+      const secs = [...new Set(STYLES.filter(s => g.menu[k.id + s.id].on).map(s => g.menu[k.id + s.id].sec))];
+      return `${k.short}${secs.join('/')}秒`;
+    }).join('・');
+  }
+  function renderGroups() {
+    $('#glist').innerHTML = data.groups.map(g => `
+      <div class="gitem${g.id === data.activeId ? ' on' : ''}">
+        <button class="pick" data-pick="${g.id}">
+          ${g.id === data.activeId ? '<span class="badge">使用中</span>' : ''}
+          <span class="t">${esc(g.name)}</span>
+          <span class="dots">${g.members.map(m => `<i style="background:${m.color}"></i>`).join('')}</span>
+          <span class="m">${g.members.length}人 ・ ${menuSummary(g)}</span>
+        </button>
+        <button class="ed" data-edit="${g.id}">編集</button>
+      </div>`).join('');
+  }
+  $('#grpBtn').onclick = () => { renderGroups(); $('#importTx').value = ''; open('ovGroups'); };
+  $('#glist').addEventListener('click', async e => {
+    const pick = e.target.closest('[data-pick]'), ed = e.target.closest('[data-edit]');
+    if (pick) {
+      const id = pick.dataset.pick;
+      if (id !== data.activeId) {
+        if (anyActive() && !(await ask('動いているタイマーは止まります。グループを切り替えますか？', '切り替える'))) return;
+        clearTimers();
+        data.activeId = id; saveData(); buildGrid();
+      }
+      close('ovGroups');
+    } else if (ed) openEditor(ed.dataset.edit);
+  });
+  $('#newGroupBtn').onclick = () => openEditor(null);
+  $('#exportBtn').onclick = () => copyText(JSON.stringify({ app: 'cheki-timer', v: 2, groups: data.groups }), $('#importTx'));
+  $('#importBtn').onclick = () => {
+    let obj;
+    try { obj = JSON.parse($('#importTx').value.trim()); } catch (e) { toast('読み込めませんでした。コピーした文字を全部貼り付けてください'); return; }
+    const list = Array.isArray(obj) ? obj : obj && obj.groups;
+    if (!Array.isArray(list) || !list.length) { toast('グループが見つかりませんでした'); return; }
+    let added = 0, updated = 0;
+    for (const raw of list) {
+      if (!raw || typeof raw !== 'object') continue;
+      const g = normGroup(raw);
+      if (!g.members.length) continue;
+      const idx = data.groups.findIndex(x => x.id === g.id);
+      if (idx >= 0) { data.groups[idx] = g; updated++; } else { data.groups.push(g); added++; }
+    }
+    saveData(); buildGrid(); renderGroups();
+    $('#importTx').value = '';
+    toast(`${added}件追加・${updated}件更新しました`);
+  };
+
+  /* ---------- group editor ---------- */
+  let draft = null, draftIsNew = false;
+  function openEditor(id) {
+    const src = id ? data.groups.find(g => g.id === id) : null;
+    draftIsNew = !src;
+    draft = src ? JSON.parse(JSON.stringify(src)) : normGroup({ name: '', members: [{ name: '', color: COLORS[1][1] }] });
+    if (draftIsNew) { draft.name = ''; draft.members[0].name = ''; }
+    $('#hEdit').textContent = draftIsNew ? '新しいグループ' : 'グループを編集';
+    $('#eName').value = draft.name;
+    $('#eDel').hidden = draftIsNew || data.groups.length <= 1;
+    renderMenuEditor();
+    renderEditor();
+    open('ovEdit');
+  }
+  function renderMenuEditor() {
+    $('#eMenu').innerHTML = ITEMS.map(i => {
+      const m = draft.menu[i.k];
+      return `<div class="mitem${m.on ? '' : ' off'}" style="--kc:${i.kind.color}">
+        <span class="sw"><input type="checkbox" data-on="${i.k}" ${m.on ? 'checked' : ''} aria-label="${itemLabel(i.k)}を使う"><span></span></span>
+        <span class="lb">${kindIcon(i.k)}${i.kind.name}${styleIcon(i.k)}<small>${i.style.name}</small></span>
+        <input class="inp" type="number" inputmode="numeric" min="5" max="600" data-sec="${i.k}" value="${m.sec}" aria-label="${itemLabel(i.k)}の秒数">
+        <span class="u">秒</span>
+      </div>`;
+    }).join('');
+  }
+  $('#eMenu').addEventListener('change', e => {
+    const k = e.target.dataset.on;
+    if (k) {
+      draft.menu[k].on = e.target.checked;
+      if (!ITEMS.some(i => draft.menu[i.k].on)) { draft.menu[k].on = true; e.target.checked = true; toast('メニューは1つ以上オンにしてください'); }
+      e.target.closest('.mitem').classList.toggle('off', !draft.menu[k].on);
+    }
+  });
+  $('#eMenu').addEventListener('input', e => {
+    const k = e.target.dataset.sec;
+    if (k) { const v = parseInt(e.target.value, 10); if (v >= 5 && v <= 600) draft.menu[k].sec = v; }
+  });
+  function renderEditor() {
+    $('#eMaxChips').innerHTML = [1, 2, 3, 4].map(n => `<button class="chip${draft.maxT === n ? ' on' : ''}" data-max="${n}">${n}<small>枚</small></button>`).join('');
+    $('#eWarnChips').innerHTML = WARN_PRESETS.map(s => `<button class="chip${draft.warn === s ? ' on' : ''}" data-warn="${s}">${s ? s + '<small>秒</small>' : '<small style="font-size:13px">なし</small>'}</button>`).join('');
+    const n = draft.members.length;
+    $('#eCount').textContent = `${n} / ${MAX}`;
+    $('#eMembers').innerHTML = draft.members.map((m, i) => `
+      <div class="mblock"><div class="mrow">
+        <button class="swatch" style="--c:${m.color}" data-color="${i}" aria-label="${i + 1}人目の色を選ぶ"></button>
+        <input class="inp" data-name="${i}" value="${esc(m.name)}" maxlength="20" placeholder="メンバー${i + 1}" aria-label="${i + 1}人目の名前">
+        <button class="mini" data-up="${i}" ${i === 0 ? 'disabled' : ''} aria-label="上へ">▲</button>
+        <button class="mini" data-down="${i}" ${i === n - 1 ? 'disabled' : ''} aria-label="下へ">▼</button>
+        <button class="mini" data-rm="${i}" ${n <= 1 ? 'disabled' : ''} aria-label="削除">✕</button>
+      </div>
+      <div class="snd">
+        <span class="sl">${icon('b')}通知音</span>
+        <select class="inp" data-sound="${i}" aria-label="${i + 1}人目の通知音">${SOUNDS.map((x, j) => `<option value="${j}" ${m.sound === j ? 'selected' : ''}>${pad(j + 1)}　${x[0]}</option>`).join('')}</select>
+        <button class="play" data-play="${i}">▶ 試聴</button>
+      </div></div>`).join('');
+    $('#eAdd').disabled = n >= MAX;
+  }
+  $('#eName').addEventListener('input', e => { draft.name = e.target.value; });
+  $('#eMaxChips').addEventListener('click', e => { const b = e.target.closest('[data-max]'); if (!b) return; draft.maxT = +b.dataset.max; renderEditor(); });
+  $('#eWarnChips').addEventListener('click', e => { const b = e.target.closest('[data-warn]'); if (!b) return; draft.warn = +b.dataset.warn; renderEditor(); });
+  $('#eMembers').addEventListener('change', e => {
+    const i = e.target.dataset.sound;
+    if (i != null) { draft.members[+i].sound = +e.target.value; if (data.settings.sound) playSound(+e.target.value); }
+  });
+  $('#eMembers').addEventListener('input', e => { const i = e.target.dataset.name; if (i != null) draft.members[+i].name = e.target.value; });
+  $('#eMembers').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const ms = draft.members, d = b.dataset;
+    if (d.color != null) return openColor(+d.color);
+    if (d.play != null) {
+      if (!data.settings.sound) { toast('設定の「音を鳴らす」をオンにしてください'); return; }
+      playSound(ms[+d.play].sound); return;
+    }
+    if (d.up != null) { const i = +d.up; [ms[i - 1], ms[i]] = [ms[i], ms[i - 1]]; }
+    else if (d.down != null) { const i = +d.down; [ms[i + 1], ms[i]] = [ms[i], ms[i + 1]]; }
+    else if (d.rm != null) ms.splice(+d.rm, 1);
+    renderEditor();
+  });
+  $('#eAdd').onclick = () => {
+    if (draft.members.length >= MAX) return;
+    const used = new Set(draft.members.map(m => m.color.toUpperCase()));
+    const next = (COLORS.find(([, c]) => !used.has(c)) || COLORS[0])[1];
+    const usedS = new Set(draft.members.map(m => m.sound));
+    const nextS = Math.max(0, SOUNDS.findIndex((_, j) => !usedS.has(j)));
+    draft.members.push({ id: uid(), name: '', color: next, sound: nextS });
+    renderEditor();
+    const inputs = $('#eMembers').querySelectorAll('[data-name]');
+    inputs[inputs.length - 1].focus();
+  };
+  $('#eSave').onclick = () => {
+    $('#eMenu').querySelectorAll('[data-sec]').forEach(inp => { draft.menu[inp.dataset.sec].sec = clampSec(inp.value, draft.menu[inp.dataset.sec].sec); });
+    draft.name = draft.name.trim() || '新しいグループ';
+    draft.members.forEach((m, i) => { m.name = m.name.trim() || `メンバー${i + 1}`; });
+    const g = normGroup(draft);
+    if (draftIsNew) { data.groups.push(g); clearTimers(); data.activeId = g.id; }
+    else {
+      data.groups[data.groups.findIndex(x => x.id === g.id)] = g;
+      if (g.id === data.activeId) { const keep = new Set(g.members.map(m => m.id)); clearTimers(keep); }
+    }
+    saveData(); buildGrid();
+    close('ovEdit'); close('ovGroups');
+    toast('保存しました');
+  };
+  $('#eDel').onclick = async () => {
+    if (data.groups.length <= 1) return;
+    if (!(await ask(`「${draft.name || 'このグループ'}」を削除しますか？元に戻せません。`, '削除する'))) return;
+    data.groups = data.groups.filter(g => g.id !== draft.id);
+    if (data.activeId === draft.id) { clearTimers(); data.activeId = data.groups[0].id; }
+    saveData(); buildGrid(); renderGroups();
+    close('ovEdit');
+  };
+
+  /* ---------- colour picker ---------- */
+  let colorIdx = 0;
+  function openColor(i) {
+    colorIdx = i;
+    const cur = draft.members[i].color.toUpperCase();
+    $('#hColor').textContent = `${draft.members[i].name || `メンバー${i + 1}`}のカラー`;
+    $('#palette').innerHTML = COLORS.map(([n, c]) => `<button class="pal${c === cur ? ' on' : ''}" data-c="${c}" style="--c:${c}"><i></i>${n}</button>`).join('');
+    $('#customColor').value = cur.toLowerCase();
+    open('ovColor');
+  }
+  function setColor(c) { draft.members[colorIdx].color = normHex(c); renderEditor(); }
+  $('#palette').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; setColor(b.dataset.c); close('ovColor'); });
+  $('#customColor').addEventListener('change', e => { setColor(e.target.value); close('ovColor'); });
+
+  /* ---------- count editor (member × day × menu) ---------- */
+  let countMid = null, countDay = null;
+  function openCount(mid, day = dayKey()) {
+    countMid = mid; countDay = day;
+    const m = group().members.find(x => x.id === mid);
+    $('#countDot').style.setProperty('--mc', m.color);
+    $('#hCount').textContent = `${m.name}${day === dayKey() ? ' の本日の枚数' : ` ${dayLabel(day)}`}`;
+    renderCount();
+    open('ovCount');
+  }
+  function renderCount() {
+    const g = group(), o = memberDay(g.id, countMid, countDay);
+    const rows = ITEMS.filter(i => g.menu[i.k].on || o[i.k]);
+    $('#cRows').innerHTML = rows.map(i => `
+      <div class="crow" style="--kc:${i.kind.color}">
+        <span class="lb">${kindIcon(i.k)}${i.kind.short}${styleIcon(i.k)}<small>${i.style.id === 's' ? 'ソロ' : 'ツーショ'}</small></span>
+        <button data-dec="${i.k}" aria-label="${itemLabel(i.k)}を1枚減らす">−</button>
+        <span class="n">${o[i.k] || 0}</span>
+        <button data-inc="${i.k}" aria-label="${itemLabel(i.k)}を1枚増やす">＋</button>
+      </div>`).join('') + `
+      <div class="crow orow">
+        <span class="lb">${icon('o')}超過<small>累計</small></span>
+        <span class="n">${durText(getOver(g.id, countMid, countDay).ms)}<small>${getOver(g.id, countMid, countDay).n}回</small></span>
+        <button data-oreset="1">0に戻す</button>
+      </div>
+      <div class="crow wrow">
+        <span class="lb">${WARN_SVG}警告<small>CALL3回</small></span>
+        <button data-wdec="1" aria-label="警告を1回減らす">−</button>
+        <span class="n">${getWarn(g.id, countMid, countDay)}</span>
+        <button data-winc="1" aria-label="警告を1回増やす">＋</button>
+      </div>`;
+    $('#cTotal').textContent = sum(o);
+    $('#cTotal').nextElementSibling.textContent = countDay === dayKey() ? '枚（本日の合計）' : '枚（この日の合計）';
+  }
+  $('#cRows').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.oreset) {
+      const o = getOver(data.activeId, countMid, countDay);
+      addOver(data.activeId, countMid, -o.ms, -o.n, countDay);
+    } else if (b.dataset.winc || b.dataset.wdec) addWarn(data.activeId, countMid, b.dataset.winc ? 1 : -1, countDay);
+    else addCount(data.activeId, countMid, b.dataset.inc || b.dataset.dec, b.dataset.inc ? 1 : -1, countDay);
+    renderCount();
+    if ($('#ovSum').classList.contains('open')) renderSum();
+  });
+
+  /* ---------- summary ---------- */
+  function sumData() {
+    const g = group(), k = $('#sDate').value;
+    const day = (counts[g.id] && counts[g.id][k]) || {};
+    const known = new Set(g.members.map(m => m.id));
+    const rows = g.members.map(m => ({ id: m.id, name: m.name, color: m.color, o: day[m.id] || {} }));
+    const other = {};
+    Object.entries(day).filter(([id]) => !known.has(id)).forEach(([, o]) => { for (const x in o) other[x] = (other[x] || 0) + o[x]; });
+    if (sum(other)) rows.push({ id: null, name: '削除したメンバー', color: '#6B6680', o: other });
+    const tot = {};
+    rows.forEach(r => { for (const x in r.o) tot[x] = (tot[x] || 0) + r.o[x]; });
+    const cols = KINDS.filter(kd => STYLES.some(s => g.menu[kd.id + s.id].on || tot[kd.id + s.id]));
+    const wday = (warns[g.id] && warns[g.id][k]) || {};
+    rows.forEach(r => { r.w = r.id ? (wday[r.id] || 0) : 0; });
+    const wtot = rows.reduce((a, r) => a + r.w, 0);
+    const oday = (overs[g.id] && overs[g.id][k]) || {};
+    rows.forEach(r => { r.ov = r.id ? (oday[r.id] || { ms: 0, n: 0 }) : { ms: 0, n: 0 }; });
+    const otot = rows.reduce((a, r) => ({ ms: a.ms + r.ov.ms, n: a.n + r.ov.n }), { ms: 0, n: 0 });
+    return { g, k, rows, tot, cols, wtot, otot };
+  }
+  function cell(o, kd) {
+    const s = o[kd.id + 's'] || 0, t = o[kd.id + 't'] || 0, n = s + t;
+    return `<span class="v${n ? '' : ' zero'}">${n}</span>${n ? `<span class="br">${icon('s')}${s} ${icon('t')}${t}</span>` : ''}`;
+  }
+  function renderSum() {
+    const { rows, tot, cols, wtot, otot } = sumData();
+    const showO = otot.ms >= 1000;
+    const oc = o => showO ? `<td class="ocol"><span class="v${o.ms >= 1000 ? '' : ' zero'}">${durShort(o.ms)}</span>${o.n ? `<span class="br">${o.n}回</span>` : ''}</td>` : '';
+    const wc = v => wtot ? `<td class="wcol"><span class="v${v ? '' : ' zero'}">${v}</span></td>` : '';
+    $('#sTable').innerHTML = `
+      <thead><tr><th>メンバー</th>${cols.map(kd => `<th><span class="th-k" style="--kc:${kd.color}">${icon(kd.id, 'ic-k')}${kd.short}</span></th>`).join('')}<th>計</th>${showO ? `<th><span class="th-k" style="--kc:var(--k-v)">${icon('o', 'ic-k')}超過</span></th>` : ''}${wtot ? `<th><span class="th-k" style="--kc:var(--danger)">${WARN_SVG.replace('class="ic"', 'class="ic ic-k"')}警告</span></th>` : ''}</tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td>${r.id ? `<button class="mn" data-mid="${r.id}" style="--c:${r.color}"><i></i>${esc(r.name)}</button>` : `<span class="mn" style="--c:${r.color}"><i></i>${esc(r.name)}</span>`}</td>
+        ${cols.map(kd => `<td>${cell(r.o, kd)}</td>`).join('')}
+        <td class="tot"><span class="v">${sum(r.o)}</span></td>${oc(r.ov)}${wc(r.w)}</tr>`).join('')}</tbody>
+      <tfoot><tr><td>合計</td>${cols.map(kd => `<td>${cell(tot, kd)}</td>`).join('')}<td class="tot"><span class="v">${sum(tot)}</span></td>${oc(otot)}${wc(wtot)}</tr></tfoot>`;
+    $('#sManual').hidden = true;
+  }
+  $('#sLegend').innerHTML = `数字の下は <span class="legend">${icon('s')}ソロ</span>・<span class="legend">${icon('t')}ツーショット</span> の内訳です。「超過」はTIME UPから「終了」を押すまでの時間の合計です。メンバー名をタップすると、その日の枚数を修正できます。`;
+  $('#sTable').addEventListener('click', e => { const b = e.target.closest('[data-mid]'); if (b) openCount(b.dataset.mid, $('#sDate').value); });
+  $('#totalBtn').onclick = () => {
+    const g = group(), today = dayKey();
+    const keys = new Set([...Object.keys(counts[g.id] || {}), ...Object.keys(warns[g.id] || {}), ...Object.keys(overs[g.id] || {})]); keys.add(today);
+    $('#hSum').textContent = `${g.name} 集計`;
+    $('#sDate').innerHTML = [...keys].sort().reverse().map(k => `<option value="${k}">${dayLabel(k)}${k === today ? '・本日' : ''}</option>`).join('');
+    $('#sDate').value = today;
+    renderSum();
+    open('ovSum');
+  };
+  $('#sDate').addEventListener('change', renderSum);
+  function breakdownText(o, cols) {
+    return cols.map(kd => {
+      const s = o[kd.id + 's'] || 0, t = o[kd.id + 't'] || 0;
+      if (!s && !t) return '';
+      const parts = [s ? `ソロ${s}` : '', t ? `ツーショ${t}` : ''].filter(Boolean).join('／');
+      return `　${kd.short}：${parts}`;
+    }).filter(Boolean).join('\n');
+  }
+  $('#sCopy').onclick = () => {
+    const { g, k, rows, tot, cols, wtot, otot } = sumData();
+    const lines = [`【特典会集計】${dayLabel(k)}`, g.name, ''];
+    rows.forEach(r => {
+      lines.push(`■${r.name}　計${sum(r.o)}${r.w ? `　⚠警告${r.w}回` : ''}`);
+      if (r.ov.ms >= 1000) lines.push(`　超過：${durText(r.ov.ms)}（${r.ov.n}回）`);
+      const b = breakdownText(r.o, cols); if (b) lines.push(b);
+    });
+    lines.push('', `■合計　${sum(tot)}${wtot ? `　⚠警告${wtot}回` : ''}`);
+    if (otot.ms >= 1000) lines.push(`　超過：${durText(otot.ms)}（${otot.n}回）`);
+    const b = breakdownText(tot, cols); if (b) lines.push(b);
+    copyText(lines.join('\n'), $('#sManual'));
+  };
+  $('#sReset').onclick = async () => {
+    const g = group(), k = $('#sDate').value;
+    if (!(await ask(`${dayLabel(k)}の${g.name}の枚数・警告・超過時間をすべて0にしますか？`, 'リセットする'))) return;
+    if (counts[g.id]) delete counts[g.id][k];
+    if (warns[g.id]) delete warns[g.id][k];
+    if (overs[g.id]) delete overs[g.id][k];
+    saveCounts(); saveWarns(); saveOvers(); paintCounts(); renderSum();
+    toast('リセットしました');
+  };
+
+  /* ---------- settings ---------- */
+  $('#setBtn').onclick = () => {
+    $('#optSound').checked = data.settings.sound;
+    $('#optVib').checked = data.settings.vibrate;
+    $('#optWake').checked = data.settings.wake;
+    open('ovSet');
+  };
+  $('#optSound').onchange = e => { data.settings.sound = e.target.checked; saveData(); };
+  $('#optVib').onchange = e => { data.settings.vibrate = e.target.checked; saveData(); };
+  $('#optWake').onchange = e => {
+    data.settings.wake = e.target.checked; saveData();
+    if (!e.target.checked && wl) { wl.release().catch(() => {}); wl = null; } else wake();
+  };
+  $('#testSound').onclick = () => {
+    if (!data.settings.sound) { toast('「音を鳴らす」をオンにしてください'); return; }
+    playSound(group().members[0].sound);
+  };
+
+  buildGrid();
+  requestAnimationFrame(frame);
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+</script>
+</body>
+</html>
