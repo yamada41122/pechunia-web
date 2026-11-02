@@ -443,7 +443,7 @@ select.inp{-webkit-appearance:none;appearance:none;background-image:linear-gradi
   const ITEMS = [];
   KINDS.forEach(k => STYLES.forEach(s => ITEMS.push({ k: k.id + s.id, kind: k, style: s })));
   const ITEM = Object.fromEntries(ITEMS.map(i => [i.k, i]));
-  const DEF_SEC = { c: 30, p: 20, v: 30, f: 15 };
+  const DEF_SEC = { c: 50, p: 50, v: 20, f: 30 };
   const itemLabel = k => { const i = ITEM[k]; return `${i.kind.short}・${i.style.id === 's' ? 'ソロ' : 'ツーショ'}`; };
   /* アイコン（チェキ＝プリント、写メ＝スマホ、動画＝ビデオカメラ、初回＝若葉、ソロ＝1人、ツーショ＝2人） */
   const ICON_PATHS = {
@@ -495,13 +495,13 @@ select.inp{-webkit-appearance:none;appearance:none;background-image:linear-gradi
   const clampSec = (v, d) => { v = parseInt(v, 10); return v >= 5 && v <= 600 ? v : d; };
   const normHex = c => /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : '#FF7EB6';
 
-  function defaultMenu(chekiSec = 30) {
+  function defaultMenu(chekiSec = DEF_SEC.c) {
     const m = {};
     for (const it of ITEMS) m[it.k] = { on: true, sec: it.kind.id === 'c' ? chekiSec : DEF_SEC[it.kind.id] };
     return m;
   }
   function normGroup(raw) {
-    const legacy = clampSec(raw.seconds, 30);
+    const legacy = clampSec(raw.seconds, DEF_SEC.c);
     const menu = defaultMenu(legacy);
     if (raw.menu && typeof raw.menu === 'object') {
       for (const it of ITEMS) {
@@ -524,7 +524,7 @@ select.inp{-webkit-appearance:none;appearance:none;background-image:linear-gradi
   }
   function sampleGroup() {
     return normGroup({
-      name: 'ペチュニア', warn: 5,
+      name: 'サンプルグループ', warn: 5,
       members: [['あかり', '#FF3B4E'], ['もも', '#FF7EB6'], ['みかん', '#FF9133'], ['ひまり', '#FFD83B'],
                 ['わかば', '#2DCB78'], ['そら', '#5CD2F2'], ['るり', '#3E7BFF'], ['すみれ', '#A45CFF']].map(([name, color]) => ({ name, color }))
     });
